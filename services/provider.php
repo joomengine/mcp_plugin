@@ -12,7 +12,6 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\DI\Container;
 use Joomla\DI\ServiceProviderInterface;
-use Joomla\Event\DispatcherInterface;
 use VDM\Plugin\Console\JoomEngineMcp\Extension\JoomEngineMcpPlugin;
 
 
@@ -33,7 +32,6 @@ return new class implements ServiceProviderInterface
 		$container->set(PluginInterface::class, static function (Container $container): PluginInterface
 		{
 			$plugin = new JoomEngineMcpPlugin(
-				$container->get(DispatcherInterface::class),
 				(array) PluginHelper::getPlugin('console', 'joomengine_mcp')
 			);
 			$plugin->setApplication(Factory::getApplication());
