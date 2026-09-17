@@ -11,12 +11,14 @@ namespace VDM\Plugin\Console\JoomEngineMcp\Extension;
 
 use Joomla\Application\ApplicationEvents;
 use Joomla\CMS\Application\ConsoleApplication;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\Event\SubscriberInterface;
 use RuntimeException;
 use VDM\Component\JoomEngineMcp\Administrator\Contract\ConsoleRuntimeInterface;
 use VDM\Component\JoomEngineMcp\Administrator\Contract\ConsoleRuntimeProviderInterface;
 use VDM\Plugin\Console\JoomEngineMcp\Console\McpCommand;
+use VDM\Plugin\Console\JoomEngineMcp\Console\OutputGuard;
 
 
 /**
@@ -26,6 +28,9 @@ use VDM\Plugin\Console\JoomEngineMcp\Console\McpCommand;
  */
 final class JoomEngineMcpPlugin extends CMSPlugin implements SubscriberInterface
 {
+	/** @var ?OutputGuard Scoped console formatter protection. @since 0.1.0 */
+	private ?OutputGuard $outputGuard = null;
+
 	/**
 	 * Subscribe to Joomla's console lifecycle, not web request events.
 	 *
@@ -34,7 +39,7 @@ final class JoomEngineMcpPlugin extends CMSPlugin implements SubscriberInterface
 	 */
 	public static function getSubscribedEvents(): array
 	{
-		return [ApplicationEvents::BEFORE_EXECUTE => 'registerCommands'];
+		return [ApplicationEvents::BEFORE_EXECUTE => 'registerCommands', ApplicationEvents::AFTER_EXECUTE => 'restoreOutput'];
 	}
 
 	/**
@@ -53,8 +58,21 @@ final class JoomEngineMcpPlugin extends CMSPlugin implements SubscriberInterface
 			return;
 		}
 
+		$selected = $application->getConsoleInput()->getFirstArgument();
+
+		if (is_string($selected) && str_starts_with($selected, 'joomla:mcp:')
+			&& !$application->getConsoleInput()->hasParameterOption(['--help', '-h', '--version', '-V']))
+		{
+			$this->outputGuard ??= new OutputGuard($application);
+		}
+
 		$resolve = static function () use ($application): ConsoleRuntimeInterface
 		{
+			if (!ComponentHelper::isEnabled('com_joomengine_mcp'))
+			{
+				throw new RuntimeException('The JoomEngine MCP component is disabled or not installed.');
+			}
+
 			$component = $application->bootComponent('com_joomengine_mcp');
 
 			if (!$component instanceof ConsoleRuntimeProviderInterface)
@@ -80,6 +98,18 @@ final class JoomEngineMcpPlugin extends CMSPlugin implements SubscriberInterface
 			}
 
 			$application->addCommand(new McpCommand($operation, $resolve));
+		}
+	}
+
+	/** @return void Restore native formatter state after Joomla flushes its queue. @since 0.1.0 */
+	public function restoreOutput(): void
+	{
+		$application = $this->getApplication();
+
+		if ($this->outputGuard !== null && $application instanceof ConsoleApplication)
+		{
+			$this->outputGuard->restore($application);
+			$this->outputGuard = null;
 		}
 	}
 }
