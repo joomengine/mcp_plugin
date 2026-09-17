@@ -8,7 +8,7 @@
   <authorEmail>joomla@vdm.io</authorEmail>
   <authorUrl>https://dev.vdm.io</authorUrl>
   <version>0.1.0</version>
-  <description>PLG_CONSOLE_JOOMENGINE_MCP_DESCRIPTION</description>
+  <description>PLG_CONSOLE_JOOMENGINE_MCP_XML_DESCRIPTION</description>
   <namespace path="src">VDM\Plugin\Console\JoomEngineMcp</namespace>
   <scriptfile>script.php</scriptfile>
   <files>
