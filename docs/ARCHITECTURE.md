@@ -1,20 +1,33 @@
-# MCP plugin architecture
+# Console plugin architecture
 
-This repository contains the Joomla integration plugin for `joomengine/mcp_component`. Joomla's current plugin, event, routing, authentication and installer contracts are authoritative. Follow JCB-generated plugin layout: root extension manifest, `services/provider.php`, `src/Extension`, language files, installer and update/changelog metadata. Do not nest the installable project inside a second plugin directory.
+## Identity and responsibility
 
-The plugin is a thin adapter: register supported endpoints and connect Joomla lifecycle events to the component. Application logic, policy evaluation, consent, protocol processing and audit belong to the component. No duplicated runtime or alternate security decisions belong here. Missing or incompatible component dependencies must fail closed without breaking unrelated Joomla requests.
+`plg_console_joomengine_mcp`, element `joomengine_mcp`, group `console`, namespace `VDM\Plugin\Console\JoomEngineMcp`. Joomla-native plugin-root source uses `joomengine_mcp.xml`, installer, `services/provider.php`, `src/Extension`, `src/Console` and language/update/changelog files. Do not wrap it inside another plugin directory.
 
-The existing reference is `joomengine/joomla-mcp` and its Joomla-native action/security contracts. This is JCB-aligned hand-authored source, not a claim that a JCB blueprint already exists. Both new repositories started with README and licence files only.
+The plugin is the local CLI adapter to `com_joomengine_mcp`. It is not the component's HTTP webservices adapter. The component owns database catalogue/schema/binding resolution, protocol processing, reusable native and API handlers, durable plans/grants/idempotency/locks, verification and audit. No duplicated action catalogue or alternative policy engine belongs here.
 
-## Delivery requirements
+## Execution boundary
 
-- Explicit extension element/group and namespaced dependency-injected plugin.
-- No public execution routes or authentication bypass.
-- No automatic trust in arbitrary client confirmation flags.
-- Installer/version checks that preserve operator choices during upgrades.
-- Matching component/plugin/package versions, update and changelog XML.
-- Component-owned `.octojpack` distribution configuration referencing this repository.
-- Contract, installation and request-level verification, reported honestly.
+Joomla console application boots enabled console plugins through its native event lifecycle. The plugin registers named commands using Joomla Console/Symfony Console contracts. Command execution verifies that the application is Joomla's console application and PHP is running in CLI before creating trusted-local context. Owning the server is the user's requested authority boundary; no API token or Joomla row view-level checks are required for this track. HTTP cannot select it.
 
-Component implementation: https://github.com/joomengine/mcp_component/pull/1
-JCB reference: https://github.com/joomengine/Joomla-Component-Builder/tree/6.x
+The privileged track still validates all schemas and declarative handler bindings, uses registered native actions/stock command mappings, bounds input and execution, retains explicit destructive-action semantics and records local provenance. It does not run arbitrary PHP, SQL, class names or shell supplied by database rows. A remote PHP stdio-to-HTTP bridge remains an HTTP-token-restricted client and is not trusted CLI.
+
+## Compatibility
+
+Inventory and migrate every original companion entry point and action contract from `companion/plugin` at `2cff50f4f6b440da3c684f9995a77efad32e1a36`. Preserve the existing `joomla:mcp:describe`, `joomla:mcp:dispatch`, `joomla:mcp:self-test` and `joomla:mcp:cli-inventory` interfaces where confirmed in the pinned source; add a direct MCP stdio command without requiring the TypeScript process. Keep aliases explicit and tested. Preserve native-model events, filters, dry-run/preflight, partial-apply diagnostics and structured result/error shapes.
+
+Stdio emits only JSON-RPC frames to stdout; banners/notices/logs go to stderr or are captured as diagnostics. Requests are bounded newline-delimited UTF-8 JSON. Errors cannot silently become successful empty results. The shared engine reads installed database definitions, so extensions installed by rows become available to CLI without editing this plugin.
+
+## Installation and distribution
+
+Require a compatible Joomla 6/PHP baseline and installed compatible component. Installation/update preserves enabled state and existing settings. Detect missing dependencies on invocation without crashing unrelated Joomla commands. Provide standalone plugin archive and join the component's `.octojpack` package assembly. Component/plugin versions are pinned together for release. Ship changelog/update metadata but no feed entry for an unpublished release. Preserve original licence notices during migration.
+
+## Acceptance
+
+Test namespace/autoload/manifest and DI/event contracts, old companion request/result compatibility, actual console command execution and protocol framing. On disposable Joomla, exercise native reads/writes with persisted read-back and cleanup, CLI inventory, error/partial-apply behaviour and inability for an HTTP request to manufacture local context. Record real commands/results and missing evidence in `docs/IMPLEMENTATION.md`; syntax/unit tests alone are not live certification.
+
+## References
+
+- Component plan: https://github.com/joomengine/mcp_component/pull/1
+- Original companion: https://github.com/joomengine/joomla-mcp/tree/2cff50f4f6b440da3c684f9995a77efad32e1a36/companion/plugin
+- JCB source/style: https://github.com/extension-builder/joomla/blob/main/docs/development/php-code-style.md
