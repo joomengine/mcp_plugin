@@ -1,0 +1,17 @@
+# Agent contract — console plugin
+
+Complete the original companion/CLI migration from `joomengine/joomla-mcp@2cff50f4f6b440da3c684f9995a77efad32e1a36` without losing supported commands, schemas, native actions, preview/plan, approval, verification or recovery. **Also complete the JCB CLI integration required by docs/JCB-INTEGRATION.md and the component's canonical JCB roadmap.** Core-only support is not the completed objective.
+
+Stay on `feature/jcb-mcp-runtime` / PR #1. Push coherent commits and update docs/IMPLEMENTATION.md with actual tests and remaining work. Do not replace branches, force-push, merge, publish or alter the original MCP/JCB source repositories without separate instruction.
+
+Use element `joomengine_mcp`, group `console`, namespace `VDM\Plugin\Console\JoomEngineMcp`; dependency `com_joomengine_mcp`, namespace `VDM\Component\JoomEngineMcp`. Joomla 6 native plugin/event/DI/console contracts are authoritative. Follow JCB's plugin-root manifest/installer/services/src/language/update layout. PHP style authority: https://github.com/extension-builder/joomla/blob/main/docs/development/php-code-style.md (tabs, LF, Allman braces, explicit typed properties/constructor injection, meaningful docblocks, no closing tags or isolated strict_types/promotion/readonly changes). Preserve inherited signatures.
+
+External Composer client and remote stdio bridge belong only to `joomengine/mcp_client`, package `joomengine/mcp-client`. Do not implement or depend on them here. The component owns HTTP routing glue, catalogue/schema resolution, business handlers, permissions/plans, jobs/artifacts, verification and audit. The plugin supplies local entry and adaptation only.
+
+Only the real console application under CLI can establish server-owner authority. JSON, headers, tokens and database rows cannot do so. Local requests still validate inputs and bindings and retain audit/recovery; HTTP-originated jobs never acquire unrestricted authority just because a local worker executes them.
+
+JCB's installed command plugin owns `componentbuilder:*` registration. Inventory it after registration, verify exact command identity/InputDefinitions, and invoke only reviewed database-selected mappings. Do not generate all family/entity combinations from the 45-entity factory map, replace JCB commands, dynamically instantiate arbitrary classes or spawn row-supplied shell programs. Preserve local file-input forms, effective global/environment options, dependencies, stdout/stderr, exit codes and partial effects. JCB package get is not an ordinary read-only lookup. Long operations use shared durable jobs, not uncontrolled timeouts/retries.
+
+Stdio stdout contains only JSON-RPC. Keep banners/notices/logs off it; preserve nonzero failures and EOF/byte bounds. Missing/incompatible component or JCB dependencies must fail the affected operation clearly without breaking unrelated Joomla/core commands. Restore native identity/input/factory state or use isolated job workers so consecutive requests cannot contaminate one another.
+
+Run syntax, provider/registration, manifest/package tests and coordinated installed Joomla/JCB API/CLI/stdio tests. Exercise true writes/read-back/cleanup, dependency queues, compile/install artifacts, command ordering, concurrency, cancellation, errors and HTTP/local-authority separation. Package checks are not live passes. Align server package versions/update feeds, retain licences and never advertise unpublished artifacts or completed JCB coverage without evidence.

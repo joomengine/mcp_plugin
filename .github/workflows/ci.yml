@@ -1,0 +1,42 @@
+name: PHP console plugin
+
+on:
+  pull_request:
+  push:
+    branches: [main, feature/jcb-mcp-runtime]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, simplexml, zip
+          coverage: none
+      - name: PHP syntax
+        run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+      - name: Manifest and reproducible package contracts
+        run: php tests/run.php
+      - uses: actions/upload-artifact@v7
+        if: matrix.php == '8.3'
+        with:
+          name: console-plugin-development-package
+          path: build/
+          if-no-files-found: error
+          retention-days: 7
