@@ -1,33 +1,29 @@
 # Console plugin architecture
 
-## Identity and responsibility
+## Identity and repository boundary
 
-`plg_console_joomengine_mcp`, element `joomengine_mcp`, group `console`, namespace `VDM\Plugin\Console\JoomEngineMcp`. Joomla-native plugin-root source uses `joomengine_mcp.xml`, installer, `services/provider.php`, `src/Extension`, `src/Console` and language/update/changelog files. Do not wrap it inside another plugin directory.
+`plg_console_joomengine_mcp`: element `joomengine_mcp`, group `console`, namespace `VDM\Plugin\Console\JoomEngineMcp`. Root manifest/installer/services/src/language/update files form a Joomla-native, JCB-aligned plugin project. Do not nest it in another installable plugin root.
 
-The plugin is the local CLI adapter to `com_joomengine_mcp`. It is not the component's HTTP webservices adapter. The component owns database catalogue/schema/binding resolution, protocol processing, reusable native and API handlers, durable plans/grants/idempotency/locks, verification and audit. No duplicated action catalogue or alternative policy engine belongs here.
+The plugin adapts the real Joomla console to the shared `com_joomengine_mcp` runtime. It owns neither HTTP webservices routing nor an external Composer client. HTTP routing glue belongs to the component; external client/remote stdio belongs to `joomengine/mcp_client`. No server-to-client package dependency is permitted.
 
-## Execution boundary
+## Local execution and wire framing
 
-Joomla console application boots enabled console plugins through its native event lifecycle. The plugin registers named commands using Joomla Console/Symfony Console contracts. Command execution verifies that the application is Joomla's console application and PHP is running in CLI before creating trusted-local context. Owning the server is the user's requested authority boundary; no API token or Joomla row view-level checks are required for this track. HTTP cannot select it.
+The native Joomla console lifecycle registers lazy `joomla:mcp:serve`, `describe`, `dispatch`, `self-test` and `cli-inventory` adapters. Invocation verifies the real console application/CLI SAPI and resolves the component's typed ConsoleRuntimeProviderInterface/ConsoleRuntimeInterface. Missing component dependencies produce a command failure without eagerly breaking unrelated commands.
 
-The privileged track still validates all schemas and declarative handler bindings, uses registered native actions/stock command mappings, bounds input and execution, retains explicit destructive-action semantics and records local provenance. It does not run arbitrary PHP, SQL, class names or shell supplied by database rows. A remote PHP stdio-to-HTTP bridge remains an HTTP-token-restricted client and is not trusted CLI.
+Local server ownership is the requested authority boundary: no API token or row viewing permission is needed, but schema validation, explicit effects/grants/plans, verification and recovery remain. The authority cannot be requested from remote JSON, database content or tokens. A remote stdio-to-HTTP client is a different product and remains API-ACL-restricted.
 
-## Compatibility
+MCP stdout contains JSON-RPC only. Legacy command JSON/NDJSON framing, input bounds, EOF and nonzero outcomes are preserved independently. Isolate Joomla banners, ANSI messages and native command diagnostics; do not convert warnings/partial mutation into an empty success envelope.
 
-Inventory and migrate every original companion entry point and action contract from `companion/plugin` at `2cff50f4f6b440da3c684f9995a77efad32e1a36`. Preserve the existing `joomla:mcp:describe`, `joomla:mcp:dispatch`, `joomla:mcp:self-test` and `joomla:mcp:cli-inventory` interfaces where confirmed in the pinned source; add a direct MCP stdio command without requiring the TypeScript process. Keep aliases explicit and tested. Preserve native-model events, filters, dry-run/preflight, partial-apply diagnostics and structured result/error shapes.
+## Required JCB integration
 
-Stdio emits only JSON-RPC frames to stdout; banners/notices/logs go to stderr or are captured as diagnostics. Requests are bounded newline-delimited UTF-8 JSON. Errors cannot silently become successful empty results. The shared engine reads installed database definitions, so extensions installed by rows become available to CLI without editing this plugin.
+Full JCB API and CLI support is a first-class server objective; this plugin supplies its local console adaptation. See JCB-INTEGRATION.md and the canonical component roadmap. JCB's own command plugin remains responsible for registering native compiler/package commands. Inventory actual registered names/aliases/arguments/options after all relevant plugins load; do not duplicate command registrations or invent names from entity counts.
 
-## Installation and distribution
+Shared component services implement JCB provider/schema/action/binding/target resolution, reviewed native/API adapters, durable jobs/artifacts and verification. The plugin must support invoking those bindings while preserving native compiler/global/environment/file/dependency/output semantics. No separate catalogue or JCB compiler copy belongs here.
 
-Require a compatible Joomla 6/PHP baseline and installed compatible component. Installation/update preserves enabled state and existing settings. Detect missing dependencies on invocation without crashing unrelated Joomla commands. Provide standalone plugin archive and join the component's `.octojpack` package assembly. Component/plugin versions are pinned together for release. Ship changelog/update metadata but no feed entry for an unpublished release. Preserve original licence notices during migration.
+Job workers need explicit authority provenance. A job requested over HTTP must retain the initiating Joomla user's permission limits, even when processed by a local worker; only jobs requested through the trusted local track have unrestricted server-owner authority. State/identity/input/factory isolation and cancellation/reconciliation are part of the handler contract.
 
-## Acceptance
+## Distribution and acceptance
 
-Test namespace/autoload/manifest and DI/event contracts, old companion request/result compatibility, actual console command execution and protocol framing. On disposable Joomla, exercise native reads/writes with persisted read-back and cleanup, CLI inventory, error/partial-apply behaviour and inability for an HTTP request to manufacture local context. Record real commands/results and missing evidence in `docs/IMPLEMENTATION.md`; syntax/unit tests alone are not live certification.
+Require compatible Joomla/PHP and component dependencies. Preserve installation enablement/settings through updates, provide a standalone PHP-built plugin archive and join the component's .octojpack package assembly. Versioned update feeds may reference only published archives. Retain original notices.
 
-## References
-
-- Component plan: https://github.com/joomengine/mcp_component/pull/1
-- Original companion: https://github.com/joomengine/joomla-mcp/tree/2cff50f4f6b440da3c684f9995a77efad32e1a36/companion/plugin
-- JCB source/style: https://github.com/extension-builder/joomla/blob/main/docs/development/php-code-style.md
+Validate native DI/event/namespace/manifest contracts and actual legacy/stdio command execution in disposable Joomla. Extend that matrix to JCB absent/disabled/installed/upgraded; registered compiler/package operations, persisted entity/repository changes, output archives, partial failures and cleanup. Source/packaging tests alone are not installed-runtime certification. Track current evidence and remaining work in IMPLEMENTATION.md.
