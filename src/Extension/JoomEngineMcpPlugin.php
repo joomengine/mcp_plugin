@@ -78,7 +78,7 @@ final class JoomEngineMcpPlugin extends CMSPlugin implements SubscriberInterface
 			return $component->getConsoleRuntime($application);
 		};
 
-		$operations = ['serve', 'describe', 'dispatch', 'self-test', 'cli-inventory'];
+		$operations = ['serve', 'describe', 'dispatch', 'self-test', 'cli-inventory', 'jcb-sync'];
 
 		// Validate the complete namespace before changing the registry or formatter.
 		foreach ($operations as $operation)

@@ -53,7 +53,7 @@ final class McpCommand extends AbstractCommand
 	 */
 	public function __construct(string $operation, callable $resolveRuntime)
 	{
-		if (!in_array($operation, ['serve', 'describe', 'dispatch', 'self-test', 'cli-inventory'], true))
+		if (!in_array($operation, ['serve', 'describe', 'dispatch', 'self-test', 'cli-inventory', 'jcb-sync'], true))
 		{
 			throw new InvalidArgumentException('Unknown Joomla MCP console operation.');
 		}

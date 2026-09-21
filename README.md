@@ -7,7 +7,7 @@ PHP-only local Joomla console integration for `com_joomengine_mcp`.
 **Extension:** `plg_console_joomengine_mcp`  
 **Namespace:** `VDM\Plugin\Console\JoomEngineMcp`
 
-The plugin connects Joomla's console lifecycle to the component-owned database catalogue and execution engine. It provides the `joomla:mcp:serve`, `describe`, `dispatch`, `self-test` and `cli-inventory` adapters. It does not contain a second MCP catalogue or an HTTP webservices plugin.
+The plugin connects Joomla's console lifecycle to the component-owned database catalogue and execution engine. It provides the `joomla:mcp:serve`, `describe`, `dispatch`, `self-test`, `cli-inventory` and `jcb-sync` adapters. It does not contain a second MCP catalogue or an HTTP webservices plugin.
 
 ## Three repository boundaries
 
@@ -22,6 +22,8 @@ Direct local server stdio is not the remote bridge. A client talking over HTTP r
 The server and this plugin must support **all actual Joomla Component Builder API and registered CLI capabilities**, alongside Joomla core. For this plugin that includes correct discovery/invocation of JCB's compiler and package get/init/pull/push/reset commands, all registered entity/area variants, native options, output/exit semantics and long-operation handling through the shared component.
 
 Read [JCB integration responsibilities](docs/JCB-INTEGRATION.md). Existing CLI inventory or a list of command names is not proof that those operations execute. JCB handlers and database bindings remain component-owned; do not copy JCB's compiler or register duplicate `componentbuilder:*` commands here. The JCB integration is required roadmap work, not already completed by this documentation change.
+
+After installing or upgrading JCB, the server owner runs `php cli/joomla.php joomla:mcp:jcb-sync` to synchronize reviewed installed JCB definitions through the component. The plugin only forwards this explicit local operation; schema discovery, identity validation and persisted catalogue updates remain component-owned.
 
 ## Status and local authority
 
