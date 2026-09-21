@@ -56,7 +56,9 @@ jobs:
           coverage: none
       - name: Build the matching component
         working-directory: component
-        run: bash tools/build.sh
+        run: |
+          bash tools/build.sh
+          bash tools/build-distribution.sh
       - name: Install and exercise this plugin checkout through native Joomla CLI
         working-directory: component
         env:
