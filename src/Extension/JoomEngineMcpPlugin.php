@@ -13,8 +13,10 @@ use Joomla\Application\ApplicationEvents;
 use Joomla\CMS\Application\ConsoleApplication;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Plugin\CMSPlugin;
+use Joomla\Console\ConsoleEvents;
 use Joomla\Event\SubscriberInterface;
 use RuntimeException;
+use Symfony\Component\Console\Exception\ExceptionInterface;
 use VDM\Component\JoomEngineMcp\Administrator\Contract\ConsoleRuntimeInterface;
 use VDM\Component\JoomEngineMcp\Administrator\Contract\ConsoleRuntimeProviderInterface;
 use VDM\Plugin\Console\JoomEngineMcp\Console\McpCommand;
@@ -39,7 +41,8 @@ final class JoomEngineMcpPlugin extends CMSPlugin implements SubscriberInterface
 	 */
 	public static function getSubscribedEvents(): array
 	{
-		return [ApplicationEvents::BEFORE_EXECUTE => 'registerCommands', ApplicationEvents::AFTER_EXECUTE => 'restoreOutput'];
+		return [ApplicationEvents::BEFORE_EXECUTE => 'registerCommands',
+			ApplicationEvents::AFTER_EXECUTE => 'restoreOutput', ConsoleEvents::APPLICATION_ERROR => 'restoreOutput'];
 	}
 
 	/**
@@ -56,14 +59,6 @@ final class JoomEngineMcpPlugin extends CMSPlugin implements SubscriberInterface
 		if (PHP_SAPI !== 'cli' || !$application instanceof ConsoleApplication)
 		{
 			return;
-		}
-
-		$selected = $application->getConsoleInput()->getFirstArgument();
-
-		if (is_string($selected) && str_starts_with($selected, 'joomla:mcp:')
-			&& !$application->getConsoleInput()->hasParameterOption(['--help', '-h', '--version', '-V']))
-		{
-			$this->outputGuard ??= new OutputGuard($application);
 		}
 
 		$resolve = static function () use ($application): ConsoleRuntimeInterface
@@ -83,21 +78,46 @@ final class JoomEngineMcpPlugin extends CMSPlugin implements SubscriberInterface
 			return $component->getConsoleRuntime($application);
 		};
 
-		foreach (['serve', 'describe', 'dispatch', 'self-test', 'cli-inventory'] as $operation)
+		$operations = ['serve', 'describe', 'dispatch', 'self-test', 'cli-inventory'];
+
+		// Validate the complete namespace before changing the registry or formatter.
+		foreach ($operations as $operation)
 		{
 			$name = 'joomla:mcp:' . $operation;
 
-			if ($application->hasCommand($name))
+			if ($application->hasCommand($name) && !$application->getCommand($name) instanceof McpCommand)
 			{
-				if ($application->getCommand($name) instanceof McpCommand)
-				{
-					continue;
-				}
-
 				throw new RuntimeException('Refusing to replace an existing Joomla MCP console command.');
 			}
+		}
 
-			$application->addCommand(new McpCommand($operation, $resolve));
+		foreach ($operations as $operation)
+		{
+			if (!$application->hasCommand('joomla:mcp:' . $operation))
+			{
+				$application->addCommand(new McpCommand($operation, $resolve));
+			}
+		}
+
+		$input = $application->getConsoleInput();
+
+		try
+		{
+			// As in Joomla's dispatcher, bind global options before determining the
+			// command. Otherwise --live-site URL may be mistaken for its name.
+			$input->bind($application->getDefinition());
+		}
+		catch (ExceptionInterface)
+		{
+			// Command-specific options are validated by the actual command later.
+		}
+
+		$selected = $input->getFirstArgument();
+
+		if (is_string($selected) && str_starts_with($selected, 'joomla:mcp:')
+			&& !$input->hasParameterOption(['--help', '-h', '--version', '-V'], true))
+		{
+			$this->outputGuard ??= new OutputGuard($application);
 		}
 	}
 

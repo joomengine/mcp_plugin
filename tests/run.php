@@ -64,4 +64,4 @@ for ($index = 0; $index < $zip->numFiles; $index++)
 }
 
 $zip->close();
-echo json_encode(['manifest' => 'passed', 'languages' => 'passed', 'package' => 'passed', 'reproducible' => true, 'liveJoomla' => 'covered by the component integration workflow'], JSON_PRETTY_PRINT) . PHP_EOL;
+echo json_encode(['manifest' => 'passed', 'languages' => 'passed', 'package' => 'passed', 'reproducible' => true, 'installedRuntime' => 'Run tests/installed.php separately.'], JSON_PRETTY_PRINT) . PHP_EOL;
