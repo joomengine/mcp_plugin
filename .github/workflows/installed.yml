@@ -1,0 +1,81 @@
+name: Installed Joomla console plugin
+
+on:
+  workflow_call:
+    inputs:
+      component_ref:
+        type: string
+        default: main
+  pull_request:
+  push:
+    branches: [main, feature/jcb-mcp-runtime]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-installed-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  installed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4']
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: mcp_fixture
+          MYSQL_USER: mcp_test
+          MYSQL_PASSWORD: disposable-test-password
+          MYSQL_ROOT_PASSWORD: disposable-root-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -pdisposable-root-password"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: plugin
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          repository: joomengine/mcp_component
+          ref: ${{ inputs.component_ref || 'feature/jcb-mcp-runtime' }}
+          path: component
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, dom, fileinfo, intl, json, mbstring, mysqli, pdo_mysql, simplexml, sodium, xml, zip
+          tools: composer:v2
+          coverage: none
+      - name: Build the matching component
+        working-directory: component
+        run: bash tools/build.sh
+      - name: Install and exercise this plugin checkout through native Joomla CLI
+        working-directory: component
+        env:
+          MCP_TEST_ALLOW_DESTRUCTIVE: '1'
+          JOOMLA_ROOT: ${{ runner.temp }}/joomla
+          MCP_PLUGIN_SOURCE: ${{ github.workspace }}/plugin
+          MCP_TEST_DB_TYPE: mysqli
+          MCP_TEST_DB_HOST: 127.0.0.1:3306
+          MCP_TEST_DB_USER: mcp_test
+          MCP_TEST_DB_PASS: disposable-test-password
+          MCP_TEST_DB_NAME: mcp_fixture
+        run: |
+          bash tests/integration/run.sh
+          test -s build/evidence/live-console-plugin.log
+      - name: Preserve installed console evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: installed-console-php-${{ matrix.php }}
+          path: component/build/evidence/
+          if-no-files-found: error
+          retention-days: 7
