@@ -56,6 +56,14 @@ foreach (['joomengine_mcp.xml', 'services/provider.php', 'src/Extension/JoomEngi
 for ($index = 0; $index < $zip->numFiles; $index++)
 {
 	$name = $zip->getNameIndex($index);
+	$system = 0;
+	$attributes = 0;
+
+	if (!$zip->getExternalAttributesIndex($index, $system, $attributes)
+		|| $system !== ZipArchive::OPSYS_UNIX || ($attributes >> 16) !== 0100644)
+	{
+		throw new RuntimeException('The plugin archive does not normalize source file permissions.');
+	}
 
 	if (str_starts_with($name, '/') || str_contains($name, '..') || str_starts_with($name, 'tests/') || str_ends_with($name, '.ts'))
 	{

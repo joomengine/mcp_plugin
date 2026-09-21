@@ -63,11 +63,11 @@ final class InstallerScript implements InstallerScriptInterface
 			$componentVersion = (string) ($manifest['version'] ?? '0');
 			$pluginVersion = (string) $adapter->getManifest()->version;
 
-			if ($row === null || (int) $row['enabled'] !== 1 || version_compare($componentVersion, '0.1.0', '<')
+			if ($row === null || (int) $row['enabled'] !== 1 || version_compare($componentVersion, '0.1.1', '<')
 				|| explode('.', $componentVersion)[0] !== explode('.', $pluginVersion)[0]
 				|| !is_file(JPATH_ADMINISTRATOR . '/components/com_joomengine_mcp/vendor/autoload.php'))
 			{
-				throw new RuntimeException('Install and enable the compatible built JoomEngine MCP component before its console plugin.');
+				throw new RuntimeException('Install and enable the built JoomEngine MCP component version 0.1.1 or later in the same major version before its console plugin.');
 			}
 
 			return true;

@@ -60,7 +60,8 @@ $mtime = $epoch !== false && ctype_digit($epoch) ? max(315532800, (int) $epoch) 
 
 foreach ($files as $file)
 {
-	if (!$zip->addFile($root . '/' . $file, $file) || !$zip->setMtimeName($file, $mtime))
+	if (!$zip->addFile($root . '/' . $file, $file) || !$zip->setMtimeName($file, $mtime)
+		|| !$zip->setExternalAttributesName($file, ZipArchive::OPSYS_UNIX, 0100644 << 16))
 	{
 		throw new RuntimeException('Cannot add a file to the plugin archive.');
 	}
