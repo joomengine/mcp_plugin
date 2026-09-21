@@ -25,8 +25,14 @@ Read [JCB integration responsibilities](docs/JCB-INTEGRATION.md). Existing CLI i
 
 ## Status and local authority
 
-Continue `feature/jcb-mcp-runtime`, draft PR #1. The plugin manifest/provider/lazy command adapters/output guard/installer and PHP-only package builder exist, with PHP 8.3/8.4 packaging contracts. Complete installed Joomla/JCB execution and combined component/package acceptance are still pending. See [implementation status](docs/IMPLEMENTATION.md).
+Continue `feature/jcb-mcp-runtime`, draft PR #1. The native provider, lazy command adapters, output guard, installer and PHP-only package builder are implemented. Native Joomla console tests cover registration, global options, typed runtime delegation and output restoration; the installed workflow builds the matching component and tests this plugin checkout through the actual Joomla CLI. Complete JCB execution acceptance is coordinated with the component. See [implementation status](docs/IMPLEMENTATION.md) for actual evidence.
 
 Local execution uses the genuine Joomla console application under CLI SAPI, without a Joomla API token or row-viewing-level restriction. Input validation, explicit action semantics, grants/plans, bounded output, audit, verification and recovery still apply. HTTP requests and database values cannot manufacture this local privilege.
 
 Original migration source: `joomengine/joomla-mcp@2cff50f4f6b440da3c684f9995a77efad32e1a36`, especially companion/plugin. Preserve licences and all supported request/result/command behaviours. The source repository is unchanged.
+
+## Verification and release
+
+Run `php tests/run.php` and `php tests/release.php` for packaging and publication metadata checks. With a full Joomla distribution in `JOOMLA_ROOT` and the component checkout in `MCP_COMPONENT_SOURCE`, run `php tests/native.php` for actual Joomla class contracts. Installed acceptance requires the component's disposable fixture and `MCP_PLUGIN_SOURCE` pointing to this checkout; its runner installs the plugin and executes `tests/installed.php` before teardown.
+
+Release publication is an explicit manual workflow on `main`, after merge and review. It runs installed acceptance against the component's `main`, refuses an existing version tag, publishes the versioned archive and checksum, downloads and verifies those assets, then commits the update feed. The feed remains empty until an archive is published. The component owns combined server package assembly.

@@ -1,0 +1,74 @@
+name: Publish console plugin release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: console-plugin-release
+  cancel-in-progress: false
+
+jobs:
+  installed:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/installed.yml
+    with:
+      component_ref: main
+  publish:
+    needs: installed
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, simplexml, zip
+          coverage: none
+      - name: Validate immutable version and rebuild package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          php tests/run.php
+          php tests/release.php
+          version="$(php -r 'echo (string) simplexml_load_file("joomengine_mcp.xml")->version;')"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          tag="v$version"
+          git fetch origin main --tags
+          [[ "$(git rev-parse origin/main)" == "$GITHUB_SHA" ]]
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo 'This immutable version already exists; bump the manifest in a reviewed change.' >&2
+            exit 1
+          fi
+          printf 'PLUGIN_VERSION=%s\nPLUGIN_TAG=%s\n' "$version" "$tag" >> "$GITHUB_ENV"
+      - name: Publish verified versioned archive and checksum
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          archive="build/plg_console_joomengine_mcp-$PLUGIN_VERSION.zip"
+          gh release create "$PLUGIN_TAG" "$archive" "$archive.sha256" \
+            --target "$GITHUB_SHA" --title "JoomEngine MCP console $PLUGIN_VERSION" \
+            --notes-file CHANGELOG.md --draft
+          gh release edit "$PLUGIN_TAG" --draft=false
+          mkdir -p build/published
+          gh release download "$PLUGIN_TAG" --dir build/published --pattern '*.zip' --pattern '*.sha256'
+          cmp "$archive" "build/published/$(basename "$archive")"
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$PLUGIN_TAG" > build/published/release.json
+          php tools/update-feed.php build/published/release.json "build/published/$(basename "$archive")"
+      - name: Commit feed only after publication succeeds
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add joomengine_mcp_update_server.xml
+          git commit -m "Publish console plugin $PLUGIN_VERSION update metadata"
+          git push origin HEAD:main
