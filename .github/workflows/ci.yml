@@ -27,16 +27,33 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, simplexml, zip
+          extensions: dom, intl, mbstring, simplexml, zip
           coverage: none
       - name: PHP syntax
         run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
       - name: Manifest and reproducible package contracts
-        run: php tests/run.php
+        run: |
+          php tests/run.php
+          php tests/release.php
+      - uses: actions/checkout@v7
+        with:
+          repository: joomengine/mcp_component
+          ref: feature/jcb-mcp-runtime
+          path: build/component-contract
+          persist-credentials: false
+      - name: Native Joomla console registration and runtime contracts
+        env:
+          JOOMLA_ROOT: ${{ runner.temp }}/native-joomla
+          MCP_COMPONENT_SOURCE: ${{ github.workspace }}/build/component-contract
+        run: |
+          bash tests/prepare-native.sh
+          php tests/native.php
       - uses: actions/upload-artifact@v7
         if: matrix.php == '8.3'
         with:
           name: console-plugin-development-package
-          path: build/
+          path: |
+            build/plg_console_joomengine_mcp-*.zip
+            build/plg_console_joomengine_mcp-*.zip.sha256
           if-no-files-found: error
           retention-days: 7
