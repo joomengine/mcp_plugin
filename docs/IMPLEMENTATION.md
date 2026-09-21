@@ -4,6 +4,8 @@
 
 Continue `feature/jcb-mcp-runtime`, draft PR #1. Preserve this branch and its component-owned shared runtime contract.
 
+Plugin version 0.1.0 requires component version 0.1.1 or later within the same major version, because the explicit JCB synchronization operation is part of that runtime contract.
+
 ## Implemented runtime
 
 Exact plugin element/group/namespace, Joomla DI/event integration, lazy adapters for serve/describe/dispatch/self-test/cli-inventory/jcb-sync, local-only checks and shared typed component runtime resolution are present. The output guard isolates protocol framing from Joomla diagnostics. Installer checks, initial enablement with update-state preservation, languages/update/changelog metadata and reproducible PHP ZIP building exist.
