@@ -8,7 +8,7 @@ The plugin adapts the real Joomla console to the shared `com_joomengine_mcp` run
 
 ## Local execution and wire framing
 
-The native Joomla console lifecycle registers lazy `joomla:mcp:serve`, `describe`, `dispatch`, `self-test` and `cli-inventory` adapters. Invocation verifies the real console application/CLI SAPI and resolves the component's typed ConsoleRuntimeProviderInterface/ConsoleRuntimeInterface. Missing component dependencies produce a command failure without eagerly breaking unrelated commands.
+The native Joomla console lifecycle registers lazy `joomla:mcp:serve`, `describe`, `dispatch`, `self-test`, `cli-inventory` and `jcb-sync` adapters. Invocation verifies the real console application/CLI SAPI and resolves the component's typed ConsoleRuntimeProviderInterface/ConsoleRuntimeInterface. Missing component dependencies produce a command failure without eagerly breaking unrelated commands.
 
 Local server ownership is the requested authority boundary: no API token or row viewing permission is needed, but schema validation, explicit effects/grants/plans, verification and recovery remain. The authority cannot be requested from remote JSON, database content or tokens. A remote stdio-to-HTTP client is a different product and remains API-ACL-restricted.
 

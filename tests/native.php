@@ -88,7 +88,7 @@ foreach ([['joomla.php', 'joomla:mcp:serve'], ['joomla.php', '--live-site', 'htt
 	$check($output->isQuiet() && ini_get('display_errors') === 'stderr', 'MCP entry isolates formatter and PHP diagnostics with global options');
 	$first = $app->getCommand('joomla:mcp:serve');
 	$plugin->registerCommands();
-	$check(count($app->getAllCommands()) === 5 && $first === $app->getCommand('joomla:mcp:serve'), 'Repeated registration is idempotent without booting the component');
+	$check(count($app->getAllCommands()) === 6 && $first === $app->getCommand('joomla:mcp:serve'), 'Repeated registration is idempotent without booting the component');
 	$dispatcher->dispatch(ConsoleEvents::APPLICATION_ERROR, new Event(ConsoleEvents::APPLICATION_ERROR));
 	$check($output->getVerbosity() === OutputInterface::VERBOSITY_VERBOSE && $output->getErrorOutput() === $previousStderr
 		&& ini_get('display_errors') === $previousErrors, 'Native error events restore the exact formatter and PHP diagnostic state');
@@ -157,7 +157,7 @@ $resolve = static function () use ($runtime, &$resolved): ConsoleRuntimeInterfac
 	return $runtime;
 };
 
-foreach (['serve', 'describe', 'dispatch', 'self-test', 'cli-inventory'] as $operation)
+foreach (['serve', 'describe', 'dispatch', 'self-test', 'cli-inventory', 'jcb-sync'] as $operation)
 {
 	$command = new McpCommand($operation, $resolve);
 	$app->addCommand($command);
