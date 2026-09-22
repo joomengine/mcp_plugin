@@ -1,4 +1,4 @@
-# Implementation status — 21 September 2026
+# Implementation status — 22 September 2026
 
 ## Branch
 
@@ -16,7 +16,7 @@ The component's existing installed stdio suite exercises its shared runtime dire
 
 ## Current scope update
 
-External Composer-client/remote-stdio ownership is exclusively in `joomengine/mcp_client`; the server and plugin do not depend on it. Full JCB API/CLI support is now mandatory in README, AGENTS and architecture, with concrete plugin tasks in JCB-INTEGRATION.md linked to the component's pinned roadmap/inventory.
+External Composer-client/remote-stdio ownership is exclusively in `joomengine/mcp_client`; the server and plugin do not depend on it. Full JCB API/CLI support remains mandatory, with the plugin boundary documented in JCB-INTEGRATION.md and actual source/execution evidence maintained by the component.
 
 JCB handlers, reviewed command/API bindings, input freezing, jobs and artifacts belong to the component. The plugin consumes them through its existing shared runtime. Its console adapters do not re-register JCB's native commands or depend on the external client. The canonical JCB acceptance matrix remains docs/JCB-INTEGRATION.md and the component roadmap.
 
@@ -26,13 +26,14 @@ Local PHP 8.3.6 verification: syntax, manifest/language/reproducible package che
 
 The installed suite covers the actual plugin's describe/self-test/inventory/dispatch adapters, JSON/NDJSON framing and nonzero outcomes, EOF/byte bounds, MCP handshake/discovery/native action execution through `serve`, and component-disabled/core-command isolation. All 14 installed assertions passed on Joomla 6.1.3 / MySQL with PHP 8.3 and 8.4, together with the component's existing installation, administrator, HTTP, native CRUD, upgrade and uninstall suites.
 
-Evidence for plugin source `51b855acc353b3e3e2eb1c060a3e1905e88febaf`, paired with component source `b3a75714eeadea35fbed102e4b5ba3ce021334cc`:
+Verified plugin source `873c46742d1ee95d661779e73649fcedaf069ff4`:
 
-- [Native console, package and release metadata CI](https://github.com/joomengine/mcp_plugin/actions/runs/35612756830): success on PHP 8.3 and 8.4.
-- [Actual installed console plugin CI](https://github.com/joomengine/mcp_plugin/actions/runs/35612756511): success on PHP 8.3 and 8.4.
+- [Native console, package and release metadata CI](https://github.com/joomengine/mcp_plugin/actions/runs/35614736871): passed on PHP 8.3 and 8.4.
+- [Coordinated installed client CI](https://github.com/joomengine/mcp_client/actions/runs/35614914117): passed on PHP 8.3 and 8.4, including all 14 actual plugin-entrypoint assertions and complete component/package lifecycle. Its source log records this plugin and component `080e189aec094b5c1f883926498623ef1f16099d`.
+- [This repository's earlier installed run](https://github.com/joomengine/mcp_plugin/actions/runs/35614736847) failed a component package-ownership assertion before that component correction. It must be superseded by passing current-head installed checks; the coordinated run already passed the corrected lifecycle.
 
 These installed fixtures have no JCB installation. The component's golden-image workflow installs a pinned version of this plugin alongside JCB and runs the same actual-entrypoint suite; its JCB operation matrix supplies the separate compiler/package/job evidence.
 
-Manual main-only publication runs installed acceptance first, refuses reused version tags, publishes immutable versioned ZIP/checksum assets, verifies downloaded bytes and updates the feed only after publication. No release has been published by this work.
+Ordinary installed CI pairs the feature branches before merge and uses the component's `main` for plugin `main`. Reusable callers can select an explicit component revision. Manual main-only publication runs installed acceptance first, refuses reused version tags, publishes immutable versioned ZIP/checksum assets, verifies downloaded bytes and updates the feed only after publication. No release has been published by this work.
 
 Complete coordinated installed JCB operations through the shared runtime, including native options/dependencies, persisted read-back, generated/install artifacts, state isolation, long jobs/cancellation/recovery and cleanup. Record exact component/JCB/plugin sources and the golden-image results before marking this PR ready. Client interoperability is tracked in mcp_client.
