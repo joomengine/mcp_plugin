@@ -7,7 +7,7 @@ The authoritative cross-repository roadmap and planning inventory live in the co
 - https://github.com/joomengine/mcp_component/blob/feature/jcb-mcp-runtime/docs/integrations/JCB.md
 - https://github.com/joomengine/mcp_component/blob/feature/jcb-mcp-runtime/docs/integrations/jcb-surface.json
 
-JCB source is pinned to `extension-builder/joomla@5ee658dd07eb749dca43ed4722f6cca7eb8208cf`; CLI documentation to `joomengine/jcb-documentation@ecd3670232d344295fc4f673b2d3dc40a64b3bf6`, english/CLI-Command-Suite.md. Full JCB support is mandatory alongside Joomla core. This page assigns plugin work; it is not evidence that JCB execution is already implemented.
+JCB source is pinned to `extension-builder/joomla@5ee658dd07eb749dca43ed4722f6cca7eb8208cf`; CLI documentation to `joomengine/jcb-documentation@ecd3670232d344295fc4f673b2d3dc40a64b3bf6`, english/CLI-Command-Suite.md. Full JCB support is mandatory alongside Joomla core. The shared component implementation now provides installed discovery, planning and job execution; final compiler/package/job acceptance remains in progress. This page defines the plugin contract, while IMPLEMENTATION.md records verified evidence.
 
 ## Native registration and invocation
 
@@ -31,12 +31,10 @@ JCB factories, message buses and dependency queues contain mutable operation sta
 
 Long work uses the component-owned durable execution/job/lease/artifact protocol. A client disconnect is not a rollback or permission to replay. Cancellation/restart/expired leases need honest partial/uncertain outcomes. HTTP-originated jobs retain the requester's Joomla ACL and scoped consent; local worker execution must not turn them into server-owner jobs. No blanket HTTP-to-CLI privilege bridge is allowed.
 
-## Plugin implementation and acceptance tasks
+## Plugin implementation and acceptance
 
-1. Extend installed registry inspection/availability checks and typed invocation contracts for JCB without shadowing its plugin.
-2. Connect shared component JCB bindings/jobs to the existing lazy MCP command runtime, preserving original core behaviours and namespace identities.
-3. Add command-level tests for registration order, options/environment, framing/EOF/bounds, nonzero exits, no-op/partial results and identity/factory restoration.
-4. Run real JCB package operations against temporary repositories and compiler/install cases against disposable Joomla, with persisted read-back, artifacts and cleanup. Cover JCB absent/disabled/version mismatch and preserve core functionality.
-5. Verify cross-principal job/artifact isolation, grants/revocation, concurrent commands, cancellation and recovery; keep exact executed source/version evidence in IMPLEMENTATION.md.
+The implemented lazy adapters forward native input/output and exit status to the component without shadowing JCB's command plugin. Native and installed tests cover registration order, global options, framing/EOF/bounds, nonzero exits and output restoration; the explicit `jcb-sync` entrypoint delegates inventory and persistence to the component.
+
+Before coordinated readiness, complete real package/compiler workflows in disposable Joomla, with persisted read-back, artifacts, cleanup and the original options/environment semantics. The component matrix must also prove missing/disabled JCB behavior, dependency handling, state isolation, principal/grant boundaries, concurrent jobs, cancellation and recovery. Record exact component/JCB/plugin revisions and successful final results in IMPLEMENTATION.md.
 
 The external `joomengine/mcp-client` only discovers and consumes the server contract. This plugin must never depend on its client package or duplicate its remote bridge.

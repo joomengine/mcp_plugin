@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: joomengine/mcp_component
-          ref: ${{ inputs.component_ref || 'feature/jcb-mcp-runtime' }}
+          ref: ${{ inputs.component_ref || (github.ref_name == 'main' && 'main' || 'feature/jcb-mcp-runtime') }}
           path: component
           persist-credentials: false
       - uses: shivammathur/setup-php@v2
