@@ -1,4 +1,4 @@
-# Implementation status — 22 September 2026
+# Implementation status — 24 September 2026
 
 ## Branch
 
@@ -25,6 +25,8 @@ JCB handlers, reviewed command/API bindings, input freezing, jobs and artifacts 
 Local PHP 8.3.6 verification: syntax, manifest/language/reproducible package checks; 29 assertions using genuine Joomla 6.1.3 console/plugin/input/output classes; and five release metadata assertions. The native class suite verifies idempotent/atomic registration, global-option handling, help/core output preservation, error restoration, lazy runtime resolution, native input forwarding and nonzero statuses. It uses a substitutable shared-runtime implementation and is not an installed JCB execution test.
 
 The installed suite covers the actual plugin's describe/self-test/inventory/dispatch adapters, JSON/NDJSON framing and nonzero outcomes, EOF/byte bounds, MCP handshake/discovery/native action execution through `serve`, and component-disabled/core-command isolation. All 14 installed assertions passed on Joomla 6.1.3 / MySQL with PHP 8.3 and 8.4, together with the component's existing installation, administrator, HTTP, native CRUD, upgrade and uninstall suites.
+
+The current suite adds four NDJSON boundary assertions: oversized spaces, tabs and non-JSON input must each return `REQUEST_TOO_LARGE`, while bounded blank frames and a valid request exactly at the one-MiB wire limit remain accepted. These exercise the shared component runtime through the installed plugin, including the component fix that checks frame size before ignoring whitespace. The previous 14-assertion runs do not certify these new checks; their installed results belong to the current coordinated workflow revision. The 24 September local review reran the 29 native Joomla assertions, reproducible package checks and five release metadata assertions successfully.
 
 Historical passing baseline, plugin source `fcfa91a026fedae9d785bad4447eb0855ddee1cf`:
 
