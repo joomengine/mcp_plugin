@@ -159,6 +159,18 @@ $check($status !== 0 && !$decode($stdout)['ok'], 'EOF without a JSON request fai
 [$status, $stdout] = $run(['joomla:mcp:dispatch'], str_repeat(' ', 1048577));
 $check($status !== 0 && ($decode($stdout)['error']['code'] ?? '') === 'REQUEST_TOO_LARGE', 'Oversized JSON is rejected at the native input bound');
 
+foreach ([' ', "\t", 'x'] as $fill)
+{
+	[$status, $stdout] = $run(['joomla:mcp:dispatch', '--format=ndjson'], str_repeat($fill, 1048577));
+	$check($status !== 0 && ($decode($stdout)['error']['code'] ?? '') === 'REQUEST_TOO_LARGE',
+		'Oversized NDJSON frames fail before blank-frame or JSON-content handling');
+}
+
+[$status, $stdout] = $run(['joomla:mcp:dispatch', '--format=ndjson'], " \t\n" . $request . str_repeat(' ', 1048575 - strlen($request)) . "\n");
+$result = $decode($stdout);
+$check($status === 0 && ($result['id'] ?? '') === 'system' && ($result['ok'] ?? false),
+	'Bounded blank NDJSON frames are ignored and a request exactly at the byte bound remains valid');
+
 $client = Client::builder()->setClientInfo('installed-plugin-fixture', '1.0.0')->setInitTimeout(15)->setRequestTimeout(30)->setMaxRetries(0)->build();
 
 try
