@@ -7,7 +7,7 @@
   <license>GNU General Public License version 3 or later; see LICENSE</license>
   <authorEmail>joomla@vdm.io</authorEmail>
   <authorUrl>https://dev.vdm.io</authorUrl>
-  <version>0.1.0</version>
+  <version>1.0.0</version>
   <description>PLG_CONSOLE_JOOMENGINE_MCP_XML_DESCRIPTION</description>
   <namespace path="src">VDM\Plugin\Console\JoomEngineMcp</namespace>
   <scriptfile>script.php</scriptfile>
@@ -25,5 +25,5 @@
     <server type="extension" priority="1" name="JoomEngine MCP Console">https://raw.githubusercontent.com/joomengine/mcp_plugin/main/joomengine_mcp_update_server.xml</server>
   </updateservers>
   <changelogurl>https://raw.githubusercontent.com/joomengine/mcp_plugin/main/joomengine_mcp_changelog.xml</changelogurl>
-  <targetplatform name="joomla" version="6\.[1-9][0-9]*" />
+  <targetplatform name="joomla" version="6\.[1-9][0-9]*"/>
 </extension>
