@@ -1,14 +1,14 @@
-# Implementation status — 24 September 2026
+# Implementation status — 28 September 2026
 
 ## Branch
 
-Implementation is on `feature/jcb-mcp-runtime` / [PR #1](https://github.com/joomengine/mcp_plugin/pull/1). The PR records current checks and review status; the [component acceptance checklist](https://github.com/joomengine/mcp_component/pull/1#issuecomment-5732685349) tracks coordinated Joomla/JCB execution evidence.
+The migration [PR #1](https://github.com/joomengine/mcp_plugin/pull/1) is merged. Source-installation and release realignment is on `fix/octo-release-workflow`; the [component acceptance checklist](https://github.com/joomengine/mcp_component/pull/1#issuecomment-5732685349) tracks coordinated Joomla/JCB execution evidence.
 
 Plugin version 0.1.0 requires component version 0.1.1 or later within the same major version, because the explicit JCB synchronization operation is part of that runtime contract.
 
 ## Implemented runtime
 
-Exact plugin element/group/namespace, Joomla DI/event integration, lazy adapters for serve/describe/dispatch/self-test/cli-inventory/jcb-sync, local-only checks and shared typed component runtime resolution are present. The output guard isolates protocol framing from Joomla diagnostics. Installer checks, initial enablement with update-state preservation, languages/update/changelog metadata and reproducible PHP ZIP building exist.
+Exact plugin element/group/namespace, Joomla DI/event integration, lazy adapters for serve/describe/dispatch/self-test/cli-inventory/jcb-sync, local-only checks and shared typed component runtime resolution are present. The output guard isolates protocol framing from Joomla diagnostics. Installer checks, initial enablement with update-state preservation and language metadata are implemented. The tracked source is directly installable; no plugin ZIP builder is maintained here.
 
 The component supplies ConsoleRuntimeInterface/ConsoleRuntimeProviderInterface and the runtime composition. The plugin forwards native input/output objects and exact exit status; it contains no JCB catalogue or business handlers. Registration checks all MCP names before mutation, binds native global options before selecting protocol output protection, and restores formatter state after successful execution and native application errors.
 
@@ -20,7 +20,9 @@ External Composer-client/remote-stdio ownership is exclusively in `joomengine/mc
 
 JCB handlers, reviewed command/API bindings, input freezing, jobs and artifacts belong to the component. The plugin consumes them through its existing shared runtime. Its console adapters do not re-register JCB's native commands or depend on the external client. The canonical JCB acceptance matrix remains docs/JCB-INTEGRATION.md and the component roadmap.
 
-## Verification layers
+## Historical verification layers
+
+The following installed/runtime results belong to the recorded September 24 revisions. The former ZIP/release-asset implementation is replaced by source-archive installation and OctoShoom; current checks are recorded in the release-alignment PR.
 
 Local PHP 8.3.6 verification: syntax, manifest/language/reproducible package checks; 29 assertions using genuine Joomla 6.1.3 console/plugin/input/output classes; and five release metadata assertions. The native class suite verifies idempotent/atomic registration, global-option handling, help/core output preservation, error restoration, lazy runtime resolution, native input forwarding and nonzero statuses. It uses a substitutable shared-runtime implementation and is not an installed JCB execution test.
 
@@ -36,6 +38,6 @@ Verified runtime and test revision: plugin `3526cae818803a02971374c044a2e2184f1c
 
 These installed core fixtures have no JCB installation. The component's golden-image workflow installs a pinned version of this plugin alongside JCB and runs the same actual-entrypoint suite; its JCB operation matrix supplies the separate compiler/package/job evidence. The verified golden-image revisions, results and inherited native limitations are recorded in the [component acceptance checklist](https://github.com/joomengine/mcp_component/pull/1#issuecomment-5732685349).
 
-Ordinary installed CI pairs the feature branches before merge and uses the component's `main` for plugin `main`. Reusable callers can select an explicit component revision. Manual main-only publication runs installed acceptance first, refuses reused version tags, publishes immutable versioned ZIP/checksum assets, verifies downloaded bytes and updates the feed only after publication. No release has been published by this work.
+Installed CI uses the component's main branch by default; configuration and reusable callers can select an explicit component revision. Manual next-version releases freeze both changelogs and manifest metadata, create an immutable tag, append its source ZIP to the Joomla update feed, and wait for OctoShoom to commit the checksum. Safe retries verify existing tag metadata without moving the tag. This plugin never builds a combined package or invokes OctoJPack. See RELEASE.md. No release has been run by this implementation work.
 
 The component golden-image suite exercises shared JCB operations, native options/dependencies, persisted read-back, generated/install artifacts, state isolation, long jobs/cancellation/recovery and cleanup. Each result belongs to its recorded component/JCB/plugin revisions. The linked PR and acceptance checklist are authoritative for current completion; historical runs do not certify later runtime changes. External-client interoperability is tracked in `mcp_client` and the coordinated component suite. Review/merge and deliberate release publication remain separate actions.

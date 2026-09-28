@@ -2,7 +2,7 @@
 
 PHP-only local Joomla console integration for `com_joomengine_mcp`.
 
-Requires the built component version **0.1.1 or later in the same major version**, including its explicit JCB synchronization runtime.
+Requires component version **0.1.1 or later in the same major version**, including its explicit JCB synchronization runtime.
 
 **Element:** `joomengine_mcp`  
 **Group:** `console`  
@@ -10,6 +10,10 @@ Requires the built component version **0.1.1 or later in the same major version*
 **Namespace:** `VDM\Plugin\Console\JoomEngineMcp`
 
 The plugin connects Joomla's console lifecycle to the component-owned database catalogue and execution engine. It provides the `joomla:mcp:serve`, `describe`, `dispatch`, `self-test`, `cli-inventory` and `jcb-sync` adapters. It does not contain a second MCP catalogue or an HTTP webservices plugin.
+
+## Download and install
+
+Download this repository using **Code → Download ZIP**, or download a release tag's source ZIP, and upload it in Joomla's extension installer after installing the component. All plugin runtime files are tracked. No Composer, build or repacking step is needed. OctoJPack can also include this plugin in the combined server package published to the separately configured package repository.
 
 ## Three repository boundaries
 
@@ -29,7 +33,7 @@ After installing or upgrading JCB, the server owner runs `php cli/joomla.php joo
 
 ## Status and local authority
 
-Implementation is on `feature/jcb-mcp-runtime` / [PR #1](https://github.com/joomengine/mcp_plugin/pull/1). The native provider, lazy command adapters, output guard, installer and PHP-only package builder are implemented. Native Joomla console tests cover registration, global options, typed runtime delegation and output restoration; installed workflows exercise this checkout through the actual Joomla CLI and the shared JCB runtime. The PR records current check results and review status; [implementation evidence](docs/IMPLEMENTATION.md) describes the verification layers.
+The native provider, lazy command adapters, output guard and installer are implemented. Native Joomla console tests cover registration, global options, typed runtime delegation and output restoration; installed workflows exercise this checkout through the actual Joomla CLI and the shared JCB runtime. [Implementation evidence](docs/IMPLEMENTATION.md) describes the verification layers and historical results.
 
 Local execution uses the genuine Joomla console application under CLI SAPI, without a Joomla API token or row-viewing-level restriction. Input validation, explicit action semantics, grants/plans, bounded output, audit, verification and recovery still apply. HTTP requests and database values cannot manufacture this local privilege.
 
@@ -37,6 +41,8 @@ Original migration source: `joomengine/joomla-mcp@2cff50f4f6b440da3c684f9995a77e
 
 ## Verification and release
 
-Run `php tests/run.php` and `php tests/release.php` for packaging and publication metadata checks. With a full Joomla distribution in `JOOMLA_ROOT` and the component checkout in `MCP_COMPONENT_SOURCE`, run `php tests/native.php` for actual Joomla class contracts. Installed acceptance requires the component's disposable fixture and `MCP_PLUGIN_SOURCE` pointing to this checkout; its runner installs the plugin and executes `tests/installed.php` before teardown.
+Run `php tests/run.php` and `php tests/release.php` for source completeness and release metadata checks. With a full Joomla distribution in `JOOMLA_ROOT` and the component checkout in `MCP_COMPONENT_SOURCE`, run `php tests/native.php` for actual Joomla class contracts. Installed acceptance requires the component's disposable fixture and `MCP_PLUGIN_SOURCE` pointing to this checkout; its runner installs the source ZIP and executes `tests/installed.php` before teardown.
 
-Release publication is an explicit manual workflow on `main`, after merge and review. It runs installed acceptance against the component's `main`, refuses an existing version tag, publishes the versioned archive and checksum, downloads and verifies those assets, then commits the update feed. The feed remains empty until an archive is published. The component owns combined server package assembly.
+Run the manual **Release** workflow with the next version. It freezes both changelogs, creates the immutable source tag, adds its ZIP URL to the Joomla update feed, and waits for OctoShoom to commit the checksum. The plugin release stops there. The component's release invokes OctoJPack separately. [Release instructions](docs/RELEASE.md) describe GitHub variables, secrets and safe retries.
+
+Human-readable changes are in [CHANGELOG.md](CHANGELOG.md); Joomla reads [joomengine_mcp_changelog.xml](joomengine_mcp_changelog.xml). Pending changes use `[[[NEXT_VERSION]]]` in both files until the release workflow assigns their version.

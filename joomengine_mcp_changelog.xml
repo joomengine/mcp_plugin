@@ -1,4 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelogs>
-  <!-- Unreleased development is documented in CHANGELOG.md. -->
+  <changelog>
+    <element>joomengine_mcp</element>
+    <type>plugin</type>
+    <folder>console</folder>
+    <version>[[[NEXT_VERSION]]]</version>
+    <addition>
+      <item>Add manual version releases with changelog freezing, immutable tags, Joomla update entries and synchronous OctoShoom checksums.</item>
+      <item>Add a categorized Joomla changelog and document release configuration, retries and agent responsibilities.</item>
+    </addition>
+    <change>
+      <item>Install and test the unchanged repository source ZIP without a build or Composer step.</item>
+      <item>Keep combined package assembly in the component's external OctoJPack process and separate package repository.</item>
+    </change>
+    <remove><item>Remove the local ZIP builder and release-asset/checksum publication implementation.</item></remove>
+    <note>
+      <item>Install the compatible component first. The plugin release never invokes OctoJPack.</item>
+      <item>Configure the GitHub variables and secrets documented in docs/RELEASE.md before releasing.</item>
+    </note>
+  </changelog>
+  <changelog>
+    <element>joomengine_mcp</element><type>plugin</type><folder>console</folder><version>0.1.0</version>
+    <addition>
+      <item>Native Joomla console adapters, local-server authority, protocol output isolation, installer checks and shared component contracts.</item>
+      <item>Explicit JCB synchronization, native command registration and installed console/stdio verification.</item>
+    </addition>
+    <note><item>Development baseline. Published immutable tags establish release availability.</item></note>
+  </changelog>
 </changelogs>

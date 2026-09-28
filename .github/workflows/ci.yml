@@ -3,7 +3,7 @@ name: PHP console plugin
 on:
   pull_request:
   push:
-    branches: [main, feature/jcb-mcp-runtime]
+    branches: [main]
 
 permissions:
   contents: read
@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  package:
+  source:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -31,14 +31,18 @@ jobs:
           coverage: none
       - name: PHP syntax
         run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
-      - name: Manifest and reproducible package contracts
+      - name: Downloaded source ZIP and release contracts
         run: |
-          php tests/run.php
+          source_archive="$(mktemp -d)"
+          trap 'rm -rf -- "$source_archive"' EXIT
+          git archive --format=zip --prefix=mcp_plugin/ --output="$source_archive/source.zip" HEAD
+          unzip -q "$source_archive/source.zip" -d "$source_archive/extracted"
+          php "$source_archive/extracted/mcp_plugin/tests/run.php"
           php tests/release.php
       - uses: actions/checkout@v7
         with:
-          repository: joomengine/mcp_component
-          ref: feature/jcb-mcp-runtime
+          repository: ${{ vars.MCP_COMPONENT_REPOSITORY || 'joomengine/mcp_component' }}
+          ref: ${{ vars.MCP_COMPONENT_REF || 'main' }}
           path: build/component-contract
           persist-credentials: false
       - name: Native Joomla console registration and runtime contracts
@@ -48,12 +52,3 @@ jobs:
         run: |
           bash tests/prepare-native.sh
           php tests/native.php
-      - uses: actions/upload-artifact@v7
-        if: matrix.php == '8.3'
-        with:
-          name: console-plugin-development-package
-          path: |
-            build/plg_console_joomengine_mcp-*.zip
-            build/plg_console_joomengine_mcp-*.zip.sha256
-          if-no-files-found: error
-          retention-days: 7

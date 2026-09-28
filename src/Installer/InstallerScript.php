@@ -67,7 +67,7 @@ final class InstallerScript implements InstallerScriptInterface
 				|| explode('.', $componentVersion)[0] !== explode('.', $pluginVersion)[0]
 				|| !is_file(JPATH_ADMINISTRATOR . '/components/com_joomengine_mcp/vendor/autoload.php'))
 			{
-				throw new RuntimeException('Install and enable the built JoomEngine MCP component version 0.1.1 or later in the same major version before its console plugin.');
+				throw new RuntimeException('Install and enable JoomEngine MCP component version 0.1.1 or later in the same major version before its console plugin.');
 			}
 
 			return true;
