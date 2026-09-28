@@ -2,7 +2,7 @@
 
 ## Branch
 
-The migration [PR #1](https://github.com/joomengine/mcp_plugin/pull/1) is merged. Source-installation and release realignment is on `fix/octo-release-workflow`; the [component acceptance checklist](https://github.com/joomengine/mcp_component/pull/1#issuecomment-5732685349) tracks coordinated Joomla/JCB execution evidence.
+The migration [PR #1](https://github.com/joomengine/mcp_plugin/pull/1) is merged. First-package release readiness is on `fix/first-package-release`; the [component acceptance checklist](https://github.com/joomengine/mcp_component/pull/1#issuecomment-5732685349) tracks coordinated Joomla/JCB execution evidence.
 
 Plugin version 0.1.0 requires component version 0.1.1 or later within the same major version, because the explicit JCB synchronization operation is part of that runtime contract.
 
@@ -41,5 +41,7 @@ These installed core fixtures have no JCB installation. The component's golden-i
 Installed CI uses the component's main branch by default; configuration and reusable callers can select an explicit component revision. Manual next-version releases freeze both changelogs and manifest metadata, create an immutable tag, append its source ZIP to the Joomla update feed, and invoke `octoleo/octoshoom@master` directly. Authentication and signing use `octoleo/git-user@v2`; custom SSH setup, temporary action checkouts and duplicate hash checks have been removed. Existing tags and feed entries are left unchanged on rerun. This plugin never builds a combined package or invokes OctoJPack. See RELEASE.md. No release has been run by this implementation work.
 
 The simplified release support passes actionlint, PHP 8.3 syntax checks, 13 isolated metadata checks, and the source manifest/language/installation-completeness checks. These checks do not exercise publication credentials or replace the installed runtime evidence above.
+
+The first-package readiness changes pass 18 isolated release metadata checks and the source manifest/language/installation-completeness checks on PHP 8.3.6. These include native feed identity/information, rejection without file changes for reused or unprepared versions and misplaced pending markers, and checksum preservation across retries and successive releases. Runtime code is unchanged. Release instructions now cover both independent plugin workflows before the component's package release; actual publication still requires running those workflows with configured credentials.
 
 The component golden-image suite exercises shared JCB operations, native options/dependencies, persisted read-back, generated/install artifacts, state isolation, long jobs/cancellation/recovery and cleanup. Each result belongs to its recorded component/JCB/plugin revisions. The linked PR and acceptance checklist are authoritative for current completion; historical runs do not certify later runtime changes. External-client interoperability is tracked in `mcp_client` and the coordinated component suite. Review/merge and deliberate release publication remain separate actions.

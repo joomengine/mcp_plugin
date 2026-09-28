@@ -2,6 +2,11 @@
 
 ## [[[NEXT_VERSION]]]
 
+### Fix
+
+- Publish the native Joomla information URL and explicit site client in console update entries.
+- Reject reused changelog versions, misplaced pending markers and update entries for unprepared future versions without changing release files.
+
 ### Addition
 
 - Add a manual next-version release workflow that freezes both changelogs, creates an immutable tag, updates the native Joomla feed and waits for OctoShoom to commit its checksum.
@@ -22,6 +27,7 @@
 
 - Install the compatible component before the console plugin. The plugin release does not invoke OctoJPack.
 - Configure the six git-user secrets documented in docs/RELEASE.md before releasing.
+- Complete both plugin release workflows before running the component workflow to publish the first combined package.
 
 ## 0.1.0 — development baseline
 

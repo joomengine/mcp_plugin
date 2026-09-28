@@ -49,6 +49,14 @@ function mcpRelease(array $arguments, string $root): void
 
 	if ($command === 'prepare')
 	{
+		$changelog = new DOMXPath(mcpReleaseXml($root . '/joomengine_mcp_changelog.xml'));
+
+		if ($changelog->query('/changelogs/changelog[version="' . $version . '"]')->length !== 0
+			|| $changelog->query('/changelogs/changelog[version="[[[NEXT_VERSION]]]"]')->length !== 1)
+		{
+			throw new RuntimeException('Choose an unreleased version with exactly one pending XML changelog version.');
+		}
+
 		foreach (['CHANGELOG.md', 'joomengine_mcp_changelog.xml'] as $path)
 		{
 			$contents = file_get_contents($root . '/' . $path);
@@ -68,6 +76,11 @@ function mcpRelease(array $arguments, string $root): void
 	}
 	else
 	{
+		if (version_compare($version, $manifestVersion->textContent, '>'))
+		{
+			throw new RuntimeException('Prepare the plugin version before adding its update entry.');
+		}
+
 		$feed = mcpReleaseXml($root . '/joomengine_mcp_update_server.xml');
 
 		if ((new DOMXPath($feed))->query('/updates/update[version="' . $version . '"]')->length > 0)
@@ -79,7 +92,8 @@ function mcpRelease(array $arguments, string $root): void
 		$feed->documentElement->insertBefore($entry, $feed->documentElement->firstChild);
 
 		foreach (['name' => 'JoomEngine MCP Console', 'description' => 'JoomEngine MCP console plugin.',
-			'element' => 'joomengine_mcp', 'type' => 'plugin', 'version' => $version, 'folder' => 'console'] as $name => $value)
+			'element' => 'joomengine_mcp', 'type' => 'plugin', 'version' => $version, 'folder' => 'console',
+			'client' => 'site'] as $name => $value)
 		{
 			mcpReleaseAppend($entry, $name, $value);
 		}
@@ -93,7 +107,7 @@ function mcpRelease(array $arguments, string $root): void
 		$platform->setAttribute('name', 'joomla');
 		$platform->setAttribute('version', '6\\.[1-9][0-9]*');
 		mcpReleaseAppend($entry, 'php_minimum', '8.3.0');
-		mcpReleaseAppend($entry, 'detailsurl', 'https://github.com/joomengine/mcp_plugin/tree/v' . $version);
+		mcpReleaseAppend($entry, 'infourl', 'https://github.com/joomengine/mcp_plugin/tree/v' . $version);
 		mcpReleaseAppend($entry, 'changelogurl', 'https://raw.githubusercontent.com/joomengine/mcp_plugin/main/joomengine_mcp_changelog.xml');
 		$writes['joomengine_mcp_update_server.xml'] = $feed->saveXML();
 	}

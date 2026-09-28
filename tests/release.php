@@ -26,9 +26,35 @@ try
 		. '<version>[[[NEXT_VERSION]]]</version><fix><item>Release metadata.</item></fix></changelog></changelogs>';
 	file_put_contents($root . '/joomengine_mcp.xml', '<extension type="plugin" group="console">'
 		. '<version>1.0.0</version><creationDate>January 2026</creationDate></extension>');
-	file_put_contents($root . '/joomengine_mcp_changelog.xml', $pending);
+	$initialChangelog = str_replace('</changelogs>', '<changelog><element>joomengine_mcp</element>'
+		. '<type>plugin</type><folder>console</folder><version>1.0.0</version>'
+		. '<note><item>Development baseline.</item></note></changelog></changelogs>', $pending);
+	file_put_contents($root . '/joomengine_mcp_changelog.xml', $initialChangelog);
 	file_put_contents($root . '/CHANGELOG.md', "# Changelog\n\n## [[[NEXT_VERSION]]]\n\n### Fix\n\n- Release metadata.\n");
 	file_put_contents($root . '/joomengine_mcp_update_server.xml', '<updates/>');
+
+	$rejectUnchanged = static function (array $arguments, string $message) use ($root, $check): void
+	{
+		$before = array_map('file_get_contents', glob($root . '/*'));
+		$rejected = false;
+
+		try
+		{
+			mcpRelease($arguments, $root);
+		}
+		catch (RuntimeException)
+		{
+			$rejected = true;
+		}
+
+		$check($rejected && $before === array_map('file_get_contents', glob($root . '/*')), $message);
+	};
+	$rejectUnchanged(['prepare', '1.0.0'], 'A baseline already in the XML changelog cannot be released again.');
+	$rejectUnchanged(['feed', '1.1.0'], 'An unprepared future version cannot change the feed.');
+	file_put_contents($root . '/joomengine_mcp_changelog.xml', str_replace('<version>[[[NEXT_VERSION]]]</version>',
+		'<version>1.0.1</version><note><item>[[[NEXT_VERSION]]]</item></note>', $initialChangelog));
+	$rejectUnchanged(['prepare', '1.1.0'], 'A marker outside the XML version cannot freeze a release.');
+	file_put_contents($root . '/joomengine_mcp_changelog.xml', $initialChangelog);
 
 	$originalFeed = file_get_contents($root . '/joomengine_mcp_update_server.xml');
 	mcpRelease(['prepare', 'v1.1.0'], $root);
@@ -45,6 +71,9 @@ try
 	$check($query->evaluate('string(/updates/update[version="1.1.0"]/downloads/downloadurl)')
 		=== 'https://github.com/joomengine/mcp_plugin/archive/refs/tags/v1.1.0.zip', 'Feed downloads the immutable source tag.');
 	$check($query->evaluate('string(/updates/update[version="1.1.0"]/folder)') === 'console', 'Feed identifies the console plugin.');
+	$check($query->evaluate('string(/updates/update[version="1.1.0"]/client)') === 'site', 'Feed matches the installed plugin client.');
+	$check($query->evaluate('string(/updates/update[version="1.1.0"]/infourl)')
+		=== 'https://github.com/joomengine/mcp_plugin/tree/v1.1.0', 'Feed exposes release information through the native Joomla field.');
 	$check($query->query('/updates/update[version="1.1.0"]/sha512')->length === 0, 'Checksum generation belongs to OctoShoom.');
 	mcpReleaseAppend($feed->documentElement->firstChild, 'sha512', str_repeat('a', 128));
 	$feed->save($root . '/joomengine_mcp_update_server.xml');
