@@ -43,6 +43,6 @@ Original migration source: `joomengine/joomla-mcp@2cff50f4f6b440da3c684f9995a77e
 
 Run `php tests/run.php` and `php tests/release.php` for source completeness and release metadata checks. With a full Joomla distribution in `JOOMLA_ROOT` and the component checkout in `MCP_COMPONENT_SOURCE`, run `php tests/native.php` for actual Joomla class contracts. Installed acceptance requires the component's disposable fixture and `MCP_PLUGIN_SOURCE` pointing to this checkout; its runner installs the source ZIP and executes `tests/installed.php` before teardown.
 
-Run the manual **Release** workflow with the next version. It freezes both changelogs, creates the immutable source tag, adds its ZIP URL to the Joomla update feed, and waits for OctoShoom to commit the checksum. The plugin release stops there. The component's release invokes OctoJPack separately. [Release instructions](docs/RELEASE.md) describe GitHub variables, secrets and safe retries.
+Run the manual **Release** workflow from `main` with the next version. It freezes both changelogs, creates the source tag, adds its ZIP URL to the Joomla update feed, and invokes OctoShoom directly to publish the checksum. The plugin release stops there. The component's release invokes OctoJPack separately. [Release instructions](docs/RELEASE.md) list the six git-user secrets.
 
 Human-readable changes are in [CHANGELOG.md](CHANGELOG.md); Joomla reads [joomengine_mcp_changelog.xml](joomengine_mcp_changelog.xml). Pending changes use `[[[NEXT_VERSION]]]` in both files until the release workflow assigns their version.
