@@ -6,6 +6,7 @@
     <folder>console</folder>
     <version>[[[NEXT_VERSION]]]</version>
     <fix>
+      <item>Check out the independent webservices plugin for the shared installed Joomla tests after its extraction from the component.</item>
       <item>Publish the native Joomla information URL and explicit site client in console update entries.</item>
       <item>Reject reused changelog versions, misplaced pending markers and update entries for unprepared future versions without changing release files.</item>
     </fix>

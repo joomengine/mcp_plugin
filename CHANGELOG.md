@@ -4,6 +4,7 @@
 
 ### Fix
 
+- Check out the independent webservices plugin for the shared installed Joomla tests after its extraction from the component.
 - Publish the native Joomla information URL and explicit site client in console update entries.
 - Reject reused changelog versions, misplaced pending markers and update entries for unprepared future versions without changing release files.
 

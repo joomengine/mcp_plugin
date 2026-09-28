@@ -64,6 +64,13 @@ jobs:
           ref: ${{ steps.component.outputs.ref }}
           path: component
           persist-credentials: false
+      - name: Check out the independent webservices plugin
+        uses: actions/checkout@v7
+        with:
+          repository: joomengine/mcp_webservices
+          ref: 94fd2a2b4ef802e1deef1050563cca2c0d879e1f
+          path: webservices
+          persist-credentials: false
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -75,6 +82,7 @@ jobs:
           MCP_TEST_ALLOW_DESTRUCTIVE: '1'
           JOOMLA_ROOT: ${{ runner.temp }}/joomla
           MCP_PLUGIN_SOURCE: ${{ github.workspace }}/plugin
+          MCP_WEBSERVICES_SOURCE: ${{ github.workspace }}/webservices
           MCP_TEST_DB_TYPE: mysqli
           MCP_TEST_DB_HOST: 127.0.0.1:3306
           MCP_TEST_DB_USER: mcp_test
