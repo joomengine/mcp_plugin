@@ -7,16 +7,20 @@
     <version>[[[NEXT_VERSION]]]</version>
     <addition>
       <item>Add manual version releases with changelog freezing, immutable tags, Joomla update entries and synchronous OctoShoom checksums.</item>
-      <item>Add a categorized Joomla changelog and document release configuration, retries and agent responsibilities.</item>
+      <item>Add a categorized Joomla changelog and document GitHub secrets and agent responsibilities.</item>
     </addition>
     <change>
       <item>Install and test the unchanged repository source ZIP without a build or Composer step.</item>
       <item>Keep combined package assembly in the component's external OctoJPack process and separate package repository.</item>
+      <item>Call git-user and OctoShoom directly as actions with fixed repository/feed settings and inherited authentication.</item>
     </change>
-    <remove><item>Remove the local ZIP builder and release-asset/checksum publication implementation.</item></remove>
+    <remove>
+      <item>Remove the local ZIP builder and release-asset/checksum publication implementation.</item>
+      <item>Remove custom SSH setup, temporary action checkouts, duplicate hash checks and release-tool configuration variables.</item>
+    </remove>
     <note>
       <item>Install the compatible component first. The plugin release never invokes OctoJPack.</item>
-      <item>Configure the GitHub variables and secrets documented in docs/RELEASE.md before releasing.</item>
+      <item>Configure the six git-user secrets documented in docs/RELEASE.md before releasing.</item>
     </note>
   </changelog>
   <changelog>
