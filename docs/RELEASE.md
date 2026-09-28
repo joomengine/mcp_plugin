@@ -4,13 +4,19 @@ The repository source ZIP installs directly into Joomla after the compatible com
 
 ## Release a version
 
-Open Actions → **Release console plugin with OctoShoom**, select `main`, and enter the next version, such as `1.2.3`. A `v` prefix is optional.
+Open Actions → **Release console plugin with OctoShoom** → **Run workflow**, select `main`, and enter an unused next version. A `v` prefix is optional. For the first package, `0.1.2` is an example that is newer than the development baselines across all three extension repositories; the workflow input chooses the actual release version.
 
 The workflow uses [git-user](https://github.com/octoleo/git-user#workflows) to configure Git authentication and signing. Its small metadata step freezes `[[[NEXT_VERSION]]]` in both changelogs, updates the manifest version/date, commits and tags the source, then adds the tagged ZIP to `joomengine_mcp_update_server.xml`. It calls the [OctoShoom action](https://github.com/octoleo/octoshoom#quick-start) directly to hash the downloads and commit the update feed.
 
 Repository `joomengine/mcp_plugin`, branch `main` and the update-feed path are fixed in the workflow. OctoShoom inherits the Git identity and authentication from git-user. Existing tags and feed entries are left unchanged when rerunning the same version.
 
-The plugin workflow stops after OctoShoom. Release the plugin before the component; OctoJPack reads the component's standalone `.octojpack` configuration and selects the latest plugin tag for the combined package.
+The plugin workflow stops after OctoShoom. To create the first combined package:
+
+1. Run this console plugin's release workflow and wait for it to succeed.
+2. In `joomengine/mcp_webservices`, use **Actions → Run workflow** to release the webservices plugin and wait for it to succeed. The two plugin releases may run independently.
+3. In `joomengine/mcp_component`, run the component release workflow. OctoJPack reads its standalone `.octojpack`, selects the latest plugin tags, and publishes the package at the component version. The component workflow then updates the package feed and runs OctoShoom.
+
+These workflows start through **Run workflow**; pushing a tag alone does not trigger them. Both plugins must have a published tag before the component release can assemble the package.
 
 ## GitHub secrets
 

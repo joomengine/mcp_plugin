@@ -5,6 +5,10 @@
     <type>plugin</type>
     <folder>console</folder>
     <version>[[[NEXT_VERSION]]]</version>
+    <fix>
+      <item>Publish the native Joomla information URL and explicit site client in console update entries.</item>
+      <item>Reject reused changelog versions, misplaced pending markers and update entries for unprepared future versions without changing release files.</item>
+    </fix>
     <addition>
       <item>Add manual version releases with changelog freezing, immutable tags, Joomla update entries and synchronous OctoShoom checksums.</item>
       <item>Add a categorized Joomla changelog and document GitHub secrets and agent responsibilities.</item>
@@ -21,6 +25,7 @@
     <note>
       <item>Install the compatible component first. The plugin release never invokes OctoJPack.</item>
       <item>Configure the six git-user secrets documented in docs/RELEASE.md before releasing.</item>
+      <item>Complete both plugin release workflows before running the component workflow to publish the first combined package.</item>
     </note>
   </changelog>
   <changelog>
