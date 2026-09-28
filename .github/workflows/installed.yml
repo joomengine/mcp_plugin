@@ -5,10 +5,9 @@ on:
     inputs:
       component_ref:
         type: string
-        default: main
   pull_request:
   push:
-    branches: [main, feature/jcb-mcp-runtime]
+    branches: [main]
 
 permissions:
   contents: read
@@ -42,24 +41,35 @@ jobs:
         with:
           path: plugin
           persist-credentials: false
+      - name: Select the matching component revision
+        id: component
+        env:
+          COMPONENT_REPOSITORY: ${{ vars.MCP_COMPONENT_REPOSITORY || 'joomengine/mcp_component' }}
+          COMPONENT_REF: ${{ inputs.component_ref || vars.MCP_COMPONENT_REF }}
+          CANDIDATE_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$COMPONENT_REF" ]]; then
+            COMPONENT_REF=main
+            if [[ -n "$CANDIDATE_REF" ]] && git ls-remote --exit-code --heads \
+              "https://github.com/$COMPONENT_REPOSITORY.git" "refs/heads/$CANDIDATE_REF" >/dev/null 2>&1; then
+              COMPONENT_REF="$CANDIDATE_REF"
+            fi
+          fi
+          git check-ref-format --branch "$COMPONENT_REF" >/dev/null
+          printf 'ref=%s\n' "$COMPONENT_REF" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v7
         with:
-          repository: joomengine/mcp_component
-          ref: ${{ inputs.component_ref || (github.ref_name == 'main' && 'main' || 'feature/jcb-mcp-runtime') }}
+          repository: ${{ vars.MCP_COMPONENT_REPOSITORY || 'joomengine/mcp_component' }}
+          ref: ${{ steps.component.outputs.ref }}
           path: component
           persist-credentials: false
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           extensions: curl, dom, fileinfo, intl, json, mbstring, mysqli, pdo_mysql, simplexml, sodium, xml, zip
-          tools: composer:v2
           coverage: none
-      - name: Build the matching component
-        working-directory: component
-        run: |
-          bash tools/build.sh
-          bash tools/build-distribution.sh
-      - name: Install and exercise this plugin checkout through native Joomla CLI
+      - name: Install source ZIPs and exercise this plugin through native Joomla CLI
         working-directory: component
         env:
           MCP_TEST_ALLOW_DESTRUCTIVE: '1'

@@ -10,7 +10,7 @@
 $root = dirname(__DIR__);
 $manifest = simplexml_load_file($root . '/joomengine_mcp.xml');
 
-if ($manifest === false || (string) $manifest['group'] !== 'console'
+if ($manifest === false || (string) $manifest['type'] !== 'plugin' || (string) $manifest['group'] !== 'console'
 	|| (string) $manifest->namespace !== 'VDM\\Plugin\\Console\\JoomEngineMcp'
 	|| (string) $manifest->files->folder[0]['plugin'] !== 'joomengine_mcp')
 {
@@ -32,44 +32,81 @@ if ($feed === false || $changelog === false)
 	throw new RuntimeException('Update or changelog XML is invalid.');
 }
 
-require $root . '/build.php';
-$archive = $root . '/build/plg_console_joomengine_mcp-' . (string) $manifest->version . '.zip';
-$firstHash = hash_file('sha256', $archive);
-require $root . '/build.php';
-
-if (!hash_equals($firstHash, hash_file('sha256', $archive)))
+/** Every installed file must already exist in the downloaded source tree. */
+$sourcePath = static function (string $relative) use ($root): string
 {
-	throw new RuntimeException('The same plugin source did not produce a reproducible archive.');
+	$resolved = realpath($root . '/' . $relative);
+
+	if ($relative === '' || str_starts_with($relative, '/') || str_contains($relative, '\\')
+		|| in_array('..', explode('/', $relative), true) || $resolved === false
+		|| !str_starts_with($resolved, $root . '/') || is_link($root . '/' . $relative))
+	{
+		throw new RuntimeException('Missing or unsafe manifest source path: ' . $relative);
+	}
+
+	return $resolved;
+};
+$installed = ['joomengine_mcp.xml' => true];
+$script = (string) $manifest->scriptfile;
+
+if (!is_file($sourcePath($script)))
+{
+	throw new RuntimeException('The installer script is missing from the source tree.');
 }
 
-$zip = new ZipArchive();
-$zip->open($archive);
+$installed[$script] = true;
 
-foreach (['joomengine_mcp.xml', 'services/provider.php', 'src/Extension/JoomEngineMcpPlugin.php', 'src/Console/McpCommand.php', 'script.php', 'LICENSE'] as $required)
+foreach ($manifest->files->children() as $entry)
 {
-	if ($zip->locateName($required) === false)
+	$relative = (string) $entry;
+	$path = $sourcePath($relative);
+
+	if ($entry->getName() === 'folder')
 	{
-		throw new RuntimeException('The plugin archive is missing an installation dependency.');
+		if (!is_dir($path))
+		{
+			throw new RuntimeException('A manifest folder is not a source directory: ' . $relative);
+		}
+
+		foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS)) as $file)
+		{
+			if ($file->isLink())
+			{
+				throw new RuntimeException('Installed plugin sources must not contain symbolic links.');
+			}
+
+			if ($file->isFile())
+			{
+				$installed[substr($file->getPathname(), strlen($root) + 1)] = true;
+			}
+		}
+	}
+	elseif ($entry->getName() === 'filename' && is_file($path))
+	{
+		$installed[$relative] = true;
+	}
+	else
+	{
+		throw new RuntimeException('Invalid manifest file entry: ' . $relative);
 	}
 }
 
-for ($index = 0; $index < $zip->numFiles; $index++)
+foreach ($manifest->languages->language as $entry)
 {
-	$name = $zip->getNameIndex($index);
-	$system = 0;
-	$attributes = 0;
-
-	if (!$zip->getExternalAttributesIndex($index, $system, $attributes)
-		|| $system !== ZipArchive::OPSYS_UNIX || ($attributes >> 16) !== 0100644)
+	if (!is_file($sourcePath((string) $entry)) || parse_ini_file($sourcePath((string) $entry)) === false)
 	{
-		throw new RuntimeException('The plugin archive does not normalize source file permissions.');
-	}
-
-	if (str_starts_with($name, '/') || str_contains($name, '..') || str_starts_with($name, 'tests/') || str_ends_with($name, '.ts'))
-	{
-		throw new RuntimeException('The plugin archive contains a forbidden path.');
+		throw new RuntimeException('The plugin language source is missing or invalid.');
 	}
 }
 
-$zip->close();
-echo json_encode(['manifest' => 'passed', 'languages' => 'passed', 'package' => 'passed', 'reproducible' => true, 'installedRuntime' => 'Run tests/installed.php separately.'], JSON_PRETTY_PRINT) . PHP_EOL;
+foreach (['services/provider.php', 'src/Extension/JoomEngineMcpPlugin.php', 'src/Console/McpCommand.php',
+	'src/Console/OutputGuard.php', 'src/Installer/InstallerScript.php', 'script.php', 'LICENSE'] as $required)
+{
+	if (!isset($installed[$required]))
+	{
+		throw new RuntimeException('The source manifest does not install a runtime dependency: ' . $required);
+	}
+}
+
+echo json_encode(['manifest' => 'passed', 'languages' => 'passed', 'sourceInstallation' => 'complete',
+	'installedRuntime' => 'Run tests/installed.php separately.'], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . PHP_EOL;

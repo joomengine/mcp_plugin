@@ -1,74 +1,148 @@
-name: Publish console plugin release
+name: Release console plugin with OctoShoom
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Stable version to release (for example 1.2.3 or v1.2.3); repeat to resume a failed release'
+        required: true
+        type: string
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: console-plugin-release
+  group: joomla-extension-release
   cancel-in-progress: false
 
 jobs:
-  installed:
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/installed.yml
-    with:
-      component_ref: main
-  publish:
-    needs: installed
-    if: github.ref == 'refs/heads/main'
+  release:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
+    timeout-minutes: 30
+    env:
+      RELEASE_BRANCH: ${{ vars.RELEASE_BRANCH || github.event.repository.default_branch }}
+      INPUT_VERSION: ${{ inputs.version }}
+      OCTOSHOOM_REPOSITORY: ${{ vars.OCTOSHOOM_REPOSITORY }}
+      OCTOSHOOM_REF: ${{ vars.OCTOSHOOM_REF }}
+      RELEASE_SSH_KNOWN_HOSTS: ${{ vars.RELEASE_SSH_KNOWN_HOSTS }}
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      GIT_AUTHOR_NAME: github-actions[bot]
+      GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+      GIT_COMMITTER_NAME: github-actions[bot]
+      GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+
     steps:
-      - uses: actions/checkout@v7
+      - name: Validate release configuration before changing the repository
+        id: configuration
+        env:
+          RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          for variable in RELEASE_BRANCH OCTOSHOOM_REPOSITORY OCTOSHOOM_REF RELEASE_SSH_KNOWN_HOSTS GH_TOKEN RELEASE_SSH_KEY; do
+            [[ -n "${!variable}" ]] || fail "Configure the required variable or secret: $variable"
+          done
+          [[ "$GITHUB_REF" == "refs/heads/$RELEASE_BRANCH" ]] || fail "Run this workflow from $RELEASE_BRANCH."
+          git check-ref-format "refs/heads/$RELEASE_BRANCH"
+          [[ "$OCTOSHOOM_REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || fail 'Invalid OCTOSHOOM_REPOSITORY.'
+          [[ "$OCTOSHOOM_REF" =~ ^[a-fA-F0-9]{40}$ ]] || fail 'Pin OCTOSHOOM_REF to a full reviewed commit SHA.'
+          version="${INPUT_VERSION#v}"
+          [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || fail 'Use a stable version such as 1.2.3.'
+          printf 'RELEASE_VERSION=%s\nRELEASE_TAG=v%s\n' "$version" "$version" >> "$GITHUB_ENV"
+          printf 'version=%s\ntag=v%s\n' "$version" "$version" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/release-ssh"
+          chmod 700 "$RUNNER_TEMP/release-ssh"
+          printf '%s\n' "$RELEASE_SSH_KEY" > "$RUNNER_TEMP/release-ssh/key"
+          printf '%s\n' "$RELEASE_SSH_KNOWN_HOSTS" > "$RUNNER_TEMP/release-ssh/known_hosts"
+          chmod 600 "$RUNNER_TEMP/release-ssh/key" "$RUNNER_TEMP/release-ssh/known_hosts"
+          printf 'GIT_SSH_COMMAND=ssh -i %s/release-ssh/key -o IdentitiesOnly=yes -o UserKnownHostsFile=%s/release-ssh/known_hosts -o StrictHostKeyChecking=yes\n' "$RUNNER_TEMP" "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          git config --global user.name "$GIT_AUTHOR_NAME"
+          git config --global user.email "$GIT_AUTHOR_EMAIL"
+          config="$(jq -cn --arg owner "${GITHUB_REPOSITORY%/*}" --arg repo "${GITHUB_REPOSITORY#*/}" --arg branch "$RELEASE_BRANCH" \
+            '{update_servers:[{owner:$owner,repo:$repo,branch:$branch,path:"joomengine_mcp_update_server.xml"}]}')"
+          printf 'shoom=%s\n' "$config" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the current release branch
+        uses: actions/checkout@v7
         with:
+          ref: ${{ env.RELEASE_BRANCH }}
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+      - name: Check out the reviewed OctoShoom action
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ vars.OCTOSHOOM_REPOSITORY }}
+          ref: ${{ vars.OCTOSHOOM_REF }}
+          path: .release-actions/octoshoom
+          token: ${{ secrets.RELEASE_TOKEN }}
+          persist-credentials: false
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: dom, simplexml, zip
           coverage: none
-      - name: Validate immutable version and rebuild package
-        env:
-          GH_TOKEN: ${{ github.token }}
+
+      - name: Verify metadata transitions
+        run: php tests/release.php
+      - name: Freeze the changelogs and create the immutable tag
+        shell: bash
         run: |
           set -euo pipefail
-          php tests/run.php
-          php tests/release.php
-          version="$(php -r 'echo (string) simplexml_load_file("joomengine_mcp.xml")->version;')"
-          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          tag="v$version"
-          git fetch origin main --tags
-          [[ "$(git rev-parse origin/main)" == "$GITHUB_SHA" ]]
-          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-            echo 'This immutable version already exists; bump the manifest in a reviewed change.' >&2
-            exit 1
+          git fetch origin "$RELEASE_BRANCH" --tags
+          git checkout -B release-source "origin/$RELEASE_BRANCH"
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            git merge-base --is-ancestor "$RELEASE_TAG^{commit}" "origin/$RELEASE_BRANCH"
+            git worktree add --detach "$RUNNER_TEMP/released-source" "$RELEASE_TAG"
+            php -r 'require $argv[1]; mcpRelease(["verify-tag", $argv[3], $argv[4], $argv[5]], $argv[2]);' \
+              tools/release.php "$RUNNER_TEMP/released-source" "$RELEASE_VERSION" "$GITHUB_REPOSITORY" "$RELEASE_BRANCH"
+            git worktree remove "$RUNNER_TEMP/released-source"
+            echo "Resuming $RELEASE_TAG; its tag and release metadata remain unchanged."
+          else
+            php tools/release.php prepare "$RELEASE_VERSION" "$GITHUB_REPOSITORY" "$RELEASE_BRANCH"
+            git add joomengine_mcp.xml CHANGELOG.md joomengine_mcp_changelog.xml
+            git commit -m "Release $RELEASE_TAG"
+            git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
+            git push --atomic origin "HEAD:refs/heads/$RELEASE_BRANCH" "refs/tags/$RELEASE_TAG"
           fi
-          printf 'PLUGIN_VERSION=%s\nPLUGIN_TAG=%s\n' "$version" "$tag" >> "$GITHUB_ENV"
-      - name: Publish verified versioned archive and checksum
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Add the Joomla update entry after its tag exists
+        shell: bash
         run: |
           set -euo pipefail
-          archive="build/plg_console_joomengine_mcp-$PLUGIN_VERSION.zip"
-          gh release create "$PLUGIN_TAG" "$archive" "$archive.sha256" \
-            --target "$GITHUB_SHA" --title "JoomEngine MCP console $PLUGIN_VERSION" \
-            --notes-file CHANGELOG.md --draft
-          gh release edit "$PLUGIN_TAG" --draft=false
-          mkdir -p build/published
-          gh release download "$PLUGIN_TAG" --dir build/published --pattern '*.zip' --pattern '*.sha256'
-          cmp "$archive" "build/published/$(basename "$archive")"
-          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$PLUGIN_TAG" > build/published/release.json
-          php tools/update-feed.php build/published/release.json "build/published/$(basename "$archive")"
-      - name: Commit feed only after publication succeeds
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Fetch current main again: a retry or another contributor may have advanced it.
+          git fetch origin "$RELEASE_BRANCH"
+          git checkout -B release-source "origin/$RELEASE_BRANCH"
+          php tools/release.php feed "$RELEASE_VERSION" "$GITHUB_REPOSITORY" "$RELEASE_BRANCH"
           git add joomengine_mcp_update_server.xml
-          git commit -m "Publish console plugin $PLUGIN_VERSION update metadata"
-          git push origin HEAD:main
+          if ! git diff --cached --quiet; then
+            git commit -m "Add $RELEASE_TAG to the Joomla update server"
+            git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          fi
+      - name: Generate and publish update hashes with OctoShoom
+        uses: ./.release-actions/octoshoom
+        with:
+          config-json: ${{ steps.configuration.outputs.shoom }}
+          git-url: github.com
+          git-user: github-actions[bot]
+          git-email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit-message: 'Add Joomla release archive SHA-512 values'
+      - name: Verify the committed SHA-512 against the actual tag download
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "$RELEASE_BRANCH"
+          git show "origin/$RELEASE_BRANCH:joomengine_mcp_update_server.xml" > joomengine_mcp_update_server.xml
+          curl --fail --silent --show-error --location --retry 3 \
+            "https://github.com/$GITHUB_REPOSITORY/archive/refs/tags/$RELEASE_TAG.zip" \
+            --output "$RUNNER_TEMP/released-extension.zip"
+          php tools/release.php verify-hash "$RELEASE_VERSION" "$GITHUB_REPOSITORY" "$RELEASE_BRANCH" "$RUNNER_TEMP/released-extension.zip"
+
+      - name: Record the completed extension release
+        shell: bash
+        run: |
+          printf 'Released [%s](https://github.com/%s/tree/%s). The Joomla update server contains the verified OctoShoom SHA-512.\n' \
+            "$RELEASE_TAG" "$GITHUB_REPOSITORY" "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove temporary authentication material
+        if: always()
+        shell: bash
+        run: rm -rf -- "$RUNNER_TEMP/release-ssh"
