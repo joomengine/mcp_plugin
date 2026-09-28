@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <updates>
+  <update>
+    <name>JoomEngine MCP Console</name>
+    <description>JoomEngine MCP console plugin.</description>
+    <element>joomengine_mcp</element>
+    <type>plugin</type>
+    <version>1.0.0</version>
+    <folder>console</folder>
+    <client>site</client>
+    <downloads><downloadurl type="full" format="zip">https://github.com/joomengine/mcp_plugin/archive/refs/tags/v1.0.0.zip</downloadurl></downloads>
+    <tags><tag>stable</tag></tags>
+    <targetplatform name="joomla" version="6\.[1-9][0-9]*"></targetplatform>
+    <php_minimum>8.3.0</php_minimum>
+    <infourl>https://github.com/joomengine/mcp_plugin/tree/v1.0.0</infourl>
+    <changelogurl>https://raw.githubusercontent.com/joomengine/mcp_plugin/main/joomengine_mcp_changelog.xml</changelogurl>
+  </update>
   <!-- Release automation adds entries only after immutable release archives exist. -->
 </updates>
