@@ -7,9 +7,12 @@
  * @license    GNU General Public License version 3 or later; see LICENSE
  */
 
+use Joomla\CMS\Installer\Adapter\PluginAdapter;
+use Joomla\CMS\Installer\Installer;
 use Joomla\Database\DatabaseInterface;
 use Mcp\Client;
 use Mcp\Client\Transport\StdioTransport;
+use VDM\Plugin\Console\JoomEngineMcp\Installer\InstallerScript;
 
 $component = realpath((string) getenv('MCP_COMPONENT_SOURCE'));
 
@@ -41,6 +44,54 @@ $check = static function (bool $condition, string $message) use (&$checks): void
 	$checks++;
 	echo 'PASS ' . $message . PHP_EOL;
 };
+
+// Exercise dependency checks against the real disposable extension registry.
+require_once JPATH_PLUGINS . '/console/joomengine_mcp/src/Installer/InstallerScript.php';
+$adapter = new PluginAdapter(new Installer(), $db);
+$adapter->setManifest(simplexml_load_file(dirname(__DIR__) . '/joomengine_mcp.xml'));
+$installer = new InstallerScript($db, $app);
+$componentRecord = $db->setQuery($db->createQuery()
+	->select($db->quoteName(['extension_id', 'element', 'enabled', 'manifest_cache']))
+	->from($db->quoteName('#__extensions'))
+	->where($db->quoteName('type') . ' = ' . $db->quote('component'))
+	->where($db->quoteName('element') . ' = ' . $db->quote('com_joomengine_mcp')))->loadObject();
+
+if ($componentRecord === null)
+{
+	throw new RuntimeException('The installed component registry record is missing.');
+}
+
+try
+{
+	$cache = json_decode($componentRecord->manifest_cache, true, 512, JSON_THROW_ON_ERROR);
+
+	foreach (['0.1.1' => true, '1.0.0' => true, '0.1.0' => false] as $version => $supported)
+	{
+		$record = clone $componentRecord;
+		$cache['version'] = $version;
+		$record->manifest_cache = json_encode($cache, JSON_THROW_ON_ERROR);
+		$db->updateObject('#__extensions', $record, 'extension_id');
+
+		foreach (['install', 'update'] as $operation)
+		{
+			$check($installer->preflight($operation, $adapter) === $supported,
+				'Installer ' . $operation . ' checks component ' . $version . ' independently of the plugin release version');
+		}
+	}
+
+	$record = clone $componentRecord;
+	$record->enabled = 0;
+	$db->updateObject('#__extensions', $record, 'extension_id');
+	$check(!$installer->preflight('install', $adapter), 'Installer rejects a disabled component');
+	$record->element .= '_fixture_missing_' . $record->extension_id;
+	$db->updateObject('#__extensions', $record, 'extension_id');
+	$check(!$installer->preflight('install', $adapter), 'Installer rejects a missing component');
+	$check($installer->preflight('uninstall', $adapter), 'Plugin removal remains possible without its component');
+}
+finally
+{
+	$db->updateObject('#__extensions', $componentRecord, 'extension_id');
+}
 
 /** Run the real installed CLI with bounded pipes, a deadline and no shell. */
 $run = static function (array $command, string $input = '') use ($arguments): array
