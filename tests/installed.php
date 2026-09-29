@@ -48,7 +48,7 @@ $check = static function (bool $condition, string $message) use (&$checks): void
 // Exercise dependency checks against the real disposable extension registry.
 require_once JPATH_PLUGINS . '/console/joomengine_mcp/src/Installer/InstallerScript.php';
 $adapter = new PluginAdapter(new Installer(), $db);
-$adapter->setManifest(simplexml_load_file(dirname(__DIR__) . '/joomengine_mcp.xml'));
+$adapter->setManifest(simplexml_load_file(JPATH_PLUGINS . '/console/joomengine_mcp/joomengine_mcp.xml'));
 $installer = new InstallerScript($db, $app);
 $componentRecord = $db->setQuery($db->createQuery()
 	->select($db->quoteName(['extension_id', 'element', 'enabled', 'manifest_cache']))
