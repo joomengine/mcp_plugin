@@ -2,7 +2,7 @@
 
 PHP-only local Joomla console integration for `com_joomengine_mcp`.
 
-Requires component version **0.1.1 or later in the same major version**, including its explicit JCB synchronization runtime.
+Requires component version **0.1.1 or later**, including its explicit JCB synchronization runtime. Component and plugin release versions are independent; the shared console runtime interfaces establish compatibility.
 
 **Element:** `joomengine_mcp`  
 **Group:** `console`  

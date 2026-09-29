@@ -1,5 +1,11 @@
 # Changelog
 
+## [[[NEXT_VERSION]]]
+
+### Fix
+
+- Allow independently versioned component and console plugin releases to install together; retain the component 0.1.1 minimum, enabled state and runtime dependency checks.
+
 ## 1.0.0
 
 ### Fix
