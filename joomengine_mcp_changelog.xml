@@ -4,6 +4,15 @@
     <element>joomengine_mcp</element>
     <type>plugin</type>
     <folder>console</folder>
+    <version>[[[NEXT_VERSION]]]</version>
+    <fix>
+      <item>Allow independently versioned component and console plugin releases to install together; retain the component 0.1.1 minimum, enabled state and runtime dependency checks.</item>
+    </fix>
+  </changelog>
+  <changelog>
+    <element>joomengine_mcp</element>
+    <type>plugin</type>
+    <folder>console</folder>
     <version>1.0.0</version>
     <fix>
       <item>Check out the independent webservices plugin for the shared installed Joomla tests after its extraction from the component.</item>

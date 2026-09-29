@@ -1,10 +1,12 @@
-# Implementation status — 28 September 2026
+# Implementation status — 29 September 2026
 
 ## Branch
 
-The migration [PR #1](https://github.com/joomengine/mcp_plugin/pull/1) is merged. First-package release readiness is on `fix/first-package-release`; the [component acceptance checklist](https://github.com/joomengine/mcp_component/pull/1#issuecomment-5732685349) tracks coordinated Joomla/JCB execution evidence.
+The migration [PR #1](https://github.com/joomengine/mcp_plugin/pull/1) and first-package readiness changes are merged. Independent release compatibility is being corrected on `fix/independent-plugin-version`; the [component acceptance checklist](https://github.com/joomengine/mcp_component/pull/1#issuecomment-5732685349) tracks coordinated Joomla/JCB execution evidence.
 
-Plugin version 0.1.0 requires component version 0.1.1 or later within the same major version, because the explicit JCB synchronization operation is part of that runtime contract.
+The plugin requires component version 0.1.1 or later, because the explicit JCB synchronization operation is part of that runtime contract. Component and plugin versions are independent. Installation checks the minimum component version, enabled state and runtime autoloader; execution retains the shared ConsoleRuntimeProviderInterface and ConsoleRuntimeInterface checks.
+
+The [v1.0.0 installed CI failure](https://github.com/joomengine/mcp_plugin/actions/runs/36455842922/job/109042215043) exposed an incorrect major-version equality check: plugin 1.0.0 rejected component 0.1.1 despite its compatible runtime. This fix removes that coupling without changing either published version or tag. A subsequent plugin release is required to distribute the corrected installer.
 
 ## Implemented runtime
 
