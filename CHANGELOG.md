@@ -6,6 +6,10 @@
 
 - Allow independently versioned component and console plugin releases to install together; retain the component 0.1.1 minimum, enabled state and runtime dependency checks.
 
+### Change
+
+- Document combined-package installation and link the canonical server setup, AI connection and direct client guides.
+
 ## 1.0.0
 
 ### Fix
