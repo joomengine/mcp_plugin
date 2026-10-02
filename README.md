@@ -13,15 +13,23 @@ The plugin connects Joomla's console lifecycle to the component-owned database c
 
 ## Download and install
 
-Download this repository using **Code → Download ZIP**, or download a release tag's source ZIP, and upload it in Joomla's extension installer after installing the component. All plugin runtime files are tracked. No Composer, build or repacking step is needed. OctoJPack can also include this plugin in the combined server package published to the separately configured package repository.
+For an existing Joomla site, download the source ZIP for the latest [published MCP package tag](https://github.com/joomengine/mcp_package/tags) and install it through **System → Install → Extensions**. The tagged package ZIP installs the MCP component, this console plugin and the webservices plugin together. Fresh plugin installations are enabled automatically; updates preserve an administrator's enabled or disabled state. Check both plugins under **System → Manage → Plugins** after installation or an update.
 
-## Three repository boundaries
+- [Getting started](https://github.com/joomengine/mcp_component/blob/main/docs/GETTING-STARTED.md): Joomla requirements, package installation, plugin checks, API token and server configuration.
+- [Connect an AI application or use the client directly](https://github.com/joomengine/mcp_component/blob/main/docs/CLIENT-CONNECTIONS.md): remote connections, direct PHP usage and local console access.
+- [MCP client README](https://github.com/joomengine/mcp_client/blob/main/README.md): Composer installation, stdio launcher settings, Docker and PHP SDK examples.
 
-- [`mcp_component`](https://github.com/joomengine/mcp_component): installed server, database definitions, HTTP authentication/ACL/routing, administrator application, API/native handlers, durable plans/jobs and verification.
+For maintainers installing this extension independently, download a release tag's source ZIP, or use **Code → Download ZIP**, and upload it in Joomla's extension installer after installing and enabling the compatible component. All plugin runtime files are tracked. No Composer, build or repacking step is needed. OctoJPack includes the released plugin in the combined package when the component's package release workflow runs.
+
+## Repository boundaries
+
+- [`mcp_package`](https://github.com/joomengine/mcp_package): recommended Joomla installation ZIP bundling the component and both plugins.
+- [`mcp_component`](https://github.com/joomengine/mcp_component): installed server, database definitions, authentication/ACL, administrator application, API/native handlers, durable plans/jobs and verification.
 - This repository: trusted local console entry, typed command/runtime integration, protocol output isolation and plugin distribution.
+- [`mcp_webservices`](https://github.com/joomengine/mcp_webservices): thin Joomla API route adapter for the authenticated HTTP endpoint.
 - [`mcp_client`](https://github.com/joomengine/mcp_client): external Composer client `joomengine/mcp-client` and remote stdio bridge. Neither component nor plugin depends on it.
 
-Direct local server stdio is not the remote bridge. A client talking over HTTP remains restricted by its Joomla API token regardless of whether it speaks stdio to an AI application on the workstation.
+Install the client on the AI application's workstation or in a separate PHP project; it is not part of the Joomla extension package. It connects to the installed server over HTTPS and can also discover and call MCP tools through its PHP API without an AI application. Direct local server stdio is not the remote bridge. A client talking over HTTP remains restricted by its Joomla API token regardless of whether it speaks stdio to an AI application on the workstation.
 
 ## Required JCB coverage
 
@@ -37,7 +45,7 @@ The native provider, lazy command adapters, output guard and installer are imple
 
 Local execution uses the genuine Joomla console application under CLI SAPI, without a Joomla API token or row-viewing-level restriction. Input validation, explicit action semantics, grants/plans, bounded output, audit, verification and recovery still apply. HTTP requests and database values cannot manufacture this local privilege.
 
-Original migration source: `joomengine/joomla-mcp@2cff50f4f6b440da3c684f9995a77efad32e1a36`, especially companion/plugin. Preserve licences and all supported request/result/command behaviours. The source repository is unchanged.
+Original migration source: `joomengine/joomla-mcp@2cff50f4f6b440da3c684f9995a77efad32e1a36`, especially companion/plugin. Preserve licences and all supported request/result/command behaviours. The runtime migration uses this pinned source snapshot.
 
 ## Verification and release
 
